@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🗳️ Online Voting System (OVS)
+# 🗳️ Online Voting System
 ### *Enterprise-Grade, Auditable, Secure Electronic Voting Platform*
 
 [![Java](https://img.shields.io/badge/Java-21%20LTS-007396?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
@@ -45,7 +45,7 @@
 
 Democratic integrity requires software systems to guarantee three core principles: **anonymity**, **integrity**, and **non-repudiation**. 
 
-The **Online Voting System (OVS)** bridges the gap between high-security backend standards and intuitive voter experience. Built on **Java 21 LTS**, **Spring Boot 3**, **PostgreSQL**, and **React 19**, OVS delivers:
+The **Online Voting System** bridges the gap between high-security backend standards and intuitive voter experience. Built on **Java 21 LTS**, **Spring Boot 3**, **PostgreSQL**, and **React 19**, the platform delivers:
 - **Zero Double-Voting Guarantee**: Multi-layered enforcement at both the application business logic layer and the PostgreSQL relational schema level (`UNIQUE(election_id, voter_id)`).
 - **Time-Locked Election State Machine**: Dynamic state transitions (`UPCOMING` ➔ `REGISTRATION_OPEN` ➔ `VOTING_OPEN` ➔ `COMPLETED`) calculated deterministically from atomic timestamp ranges.
 - **Strict Role Separation (RBAC)**: Distinct authorization boundaries separating Super Administrators (`ADMIN`), Registered Citizens (`VOTER`), and Nominated Leaders (`CANDIDATE`).
