@@ -1,0 +1,46 @@
+package com.voting.dto;
+
+import jakarta.validation.constraints.NotBlank;
+
+public class AuthRequest {
+
+    @NotBlank(message = "Identifier is required")
+    private String identifier; // admin, voterId (V1), candidateId (C1), or email
+
+    @NotBlank(message = "Password is required")
+    private String password;
+
+    private String role; // ADMIN, VOTER, CANDIDATE
+
+    public AuthRequest() {}
+
+    public AuthRequest(String identifier, String password, String role) {
+        this.identifier = identifier;
+        this.password = password;
+        this.role = role;
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+}

@@ -1,0 +1,72 @@
+/* Theme Styles */
+
+/* 1. Public Theme: Neutral Government Style with subtle tricolor/blue accents */
+.theme-public {
+  --theme-primary: #1e3a8a;
+  --theme-primary-hover: #172554;
+  --theme-accent-saffron: #f97316;
+  --theme-accent-green: #16a34a;
+  --theme-accent-blue: #2563eb;
+  --theme-bg: #f8fafc;
+  --theme-surface: #ffffff;
+  --theme-border: #e2e8f0;
+  --theme-header-bg: #ffffff;
+  --theme-header-text: #0f172a;
+}
+
+/* 2. Voter Theme: Green */
+.theme-voter {
+  --theme-primary: #15803d;
+  --theme-primary-hover: #166534;
+  --theme-primary-light: #22c55e;
+  --theme-primary-bg: #f0fdf4;
+  --theme-primary-border: #bbf7d0;
+  --theme-header-bg: #15803d;
+  --theme-header-text: #ffffff;
+  --theme-sidebar-bg: #14532d;
+  --theme-active-nav: #166534;
+}
+
+/* 3. Candidate Theme: Saffron / Orange */
+.theme-candidate {
+  --theme-primary: #ea580c;
+  --theme-primary-hover: #c2410c;
+  --theme-primary-light: #fb923c;
+  --theme-primary-bg: #fff7ed;
+  --theme-primary-border: #fed7aa;
+  --theme-header-bg: #ea580c;
+  --theme-header-text: #ffffff;
+  --theme-sidebar-bg: #9a3412;
+  --theme-active-nav: #c2410c;
+}
+
+/* 4. Election Card & Accent Theme: Blue */
+.theme-election-blue {
+  --election-primary: #2563eb;
+  --election-primary-hover: #1d4ed8;
+  --election-bg: #eff6ff;
+  --election-border: #bfdbfe;
+  --election-text: #1e40af;
+}
+
+/* 5. Results Theme: Clean Minimal White */
+.theme-results {
+  --results-bg: #ffffff;
+  --results-border: #e2e8f0;
+  --results-card-bg: #f8fafc;
+  --results-highlight: #0f172a;
+}
+
+/* 6. Admin Theme: Grey + Black */
+.theme-admin {
+  --admin-sidebar-bg: #0f172a;
+  --admin-sidebar-hover: #1e293b;
+  --admin-sidebar-active: #334155;
+  --admin-sidebar-text: #f8fafc;
+  --admin-sidebar-muted: #94a3b8;
+  --admin-body-bg: #f1f5f9;
+  --admin-card-bg: #ffffff;
+  --admin-primary: #0f172a;
+  --admin-primary-hover: #1e293b;
+  --admin-border: #e2e8f0;
+}

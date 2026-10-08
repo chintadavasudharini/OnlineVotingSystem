@@ -1,0 +1,535 @@
+{
+  "info": {
+    "_postman_id": "a9c7b12d-4198-4b71-b258-8120d91d643b",
+    "name": "Online Voting System API",
+    "description": "Comprehensive Postman Collection for the Online Voting System Backend REST APIs (Spring Boot, Spring Security, JWT, PostgreSQL).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080/api",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "voterToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "candidateToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "electionId",
+      "value": "E1",
+      "type": "string"
+    },
+    {
+      "key": "voterId",
+      "value": "V1",
+      "type": "string"
+    },
+    {
+      "key": "candidateId",
+      "value": "C1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Authentication & Registration",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('adminToken', jsonData.data.token);",
+                  "    console.log('Admin token saved');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"admin\",\n  \"password\": \"admin\",\n  \"role\": \"ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Register Voter",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "    pm.collectionVariables.set('voterToken', jsonData.data.token);",
+                  "    pm.collectionVariables.set('voterId', jsonData.data.id);",
+                  "    console.log('Voter registered with ID: ' + jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"johndoe@example.com\",\n  \"dob\": \"1998-05-15\",\n  \"age\": 28,\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register-voter",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register-voter"]
+            }
+          }
+        },
+        {
+          "name": "Voter Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('voterToken', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{voterId}}\",\n  \"password\": \"password123\",\n  \"role\": \"VOTER\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Register Candidate (From Voter)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data) {",
+                  "    pm.collectionVariables.set('candidateToken', jsonData.data.token);",
+                  "    pm.collectionVariables.set('candidateId', jsonData.data.id);",
+                  "    console.log('Candidate created with ID: ' + jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"voterId\": \"{{voterId}}\",\n  \"password\": \"candidatePass123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register-candidate",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "register-candidate"]
+            }
+          }
+        },
+        {
+          "name": "Candidate Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('candidateToken', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{candidateId}}\",\n  \"password\": \"candidatePass123\",\n  \"role\": \"CANDIDATE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Election Management",
+      "item": [
+        {
+          "name": "Get All Elections",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/elections",
+              "host": ["{{baseUrl}}"],
+              "path": ["elections"]
+            }
+          }
+        },
+        {
+          "name": "Get Election by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/elections/{{electionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["elections", "{{electionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Create Election (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"City Mayoral Election 2026\",\n  \"description\": \"Annual election for municipal mayoral office\",\n  \"registrationStart\": \"2026-10-01T00:00:00\",\n  \"registrationEnd\": \"2026-10-15T23:59:59\",\n  \"votingStart\": \"2026-10-16T08:00:00\",\n  \"votingEnd\": \"2026-10-25T18:00:00\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/elections",
+              "host": ["{{baseUrl}}"],
+              "path": ["elections"]
+            }
+          }
+        },
+        {
+          "name": "Publish Election Results (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/elections/{{electionId}}/publish-results",
+              "host": ["{{baseUrl}}"],
+              "path": ["elections", "{{electionId}}", "publish-results"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Candidate Actions",
+      "item": [
+        {
+          "name": "Register for Election (Candidate)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{candidateToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"electionId\": \"{{electionId}}\",\n  \"manifestoTitle\": \"Prosperity, Transparency & Growth\",\n  \"visionStatement\": \"Building a smarter and greener democratic society.\",\n  \"keyPromises\": [\n    \"Free public Wi-Fi infrastructure\",\n    \"100% renewable public transport\",\n    \"Transparent municipal budgeting\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/candidates/register-for-election",
+              "host": ["{{baseUrl}}"],
+              "path": ["candidates", "register-for-election"]
+            }
+          }
+        },
+        {
+          "name": "Get Candidates for Election",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/candidates/election/{{electionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["candidates", "election", "{{electionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get All Candidates (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/candidates",
+              "host": ["{{baseUrl}}"],
+              "path": ["candidates"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Voting & Results",
+      "item": [
+        {
+          "name": "Cast Vote (Voter)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{voterToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"electionId\": \"{{electionId}}\",\n  \"candidateId\": \"{{candidateId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/votes/cast",
+              "host": ["{{baseUrl}}"],
+              "path": ["votes", "cast"]
+            }
+          }
+        },
+        {
+          "name": "Check If Voter Has Voted",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{voterToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/votes/has-voted/{{electionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["votes", "has-voted", "{{electionId}}"]
+            }
+          }
+        },
+        {
+          "name": "Get Election Results",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/votes/results/{{electionId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["votes", "results", "{{electionId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Voters & Audit Trail",
+      "item": [
+        {
+          "name": "Get All Voters (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voters",
+              "host": ["{{baseUrl}}"],
+              "path": ["voters"]
+            }
+          }
+        },
+        {
+          "name": "Get User Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{voterToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/voters/profile",
+              "host": ["{{baseUrl}}"],
+              "path": ["voters", "profile"]
+            }
+          }
+        },
+        {
+          "name": "Get Audit Logs (Admin Only)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/audit-logs",
+              "host": ["{{baseUrl}}"],
+              "path": ["audit-logs"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

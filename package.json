@@ -1,0 +1,16 @@
+{
+  "name": "online-voting-system-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Online Voting System full-stack web application",
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "powershell -Command \"cd backend; .\\mvnw.cmd spring-boot:run\"",
+    "build:frontend": "npm --prefix frontend run build",
+    "build:backend": "powershell -Command \"cd backend; .\\mvnw.cmd clean package -DskipTests\"",
+    "build": "npm run build:frontend && npm run build:backend",
+    "start": "npm --prefix frontend run dev",
+    "lint": "npm --prefix frontend run lint"
+  }
+}
