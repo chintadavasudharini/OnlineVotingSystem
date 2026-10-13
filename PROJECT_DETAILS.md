@@ -1,4 +1,4 @@
-# 🗳️ Online Voting System (OVS) — Enterprise Technical Specification & Architecture Dossier
+# 🗳️ Online Voting System — Enterprise Technical Specification & Architecture Dossier
 
 <div align="center">
 
@@ -40,7 +40,7 @@
 
 ## 1. Architectural Vision & Design Principles
 
-The **Online Voting System (OVS)** is an auditable, high-concurrency electronic voting engine engineered to solve fundamental challenges in digital democracy:
+The **Online Voting System** is an auditable, high-concurrency electronic voting engine engineered to solve fundamental challenges in digital democracy:
 
 ```
           ┌─────────────────────────────────────────────────────────────┐
@@ -55,7 +55,7 @@ The **Online Voting System (OVS)** is an auditable, high-concurrency electronic 
 ```
 
 ### Core Design Tenets:
-1. **Mathematical Single-Vote Integrity**: In electronic voting, application-layer memory checks are insufficient under concurrent race conditions. OVS pushes the non-repudiation barrier into the PostgreSQL storage engine via composite unique keys (`UNIQUE(election_id, voter_id)`).
+1. **Mathematical Single-Vote Integrity**: In electronic voting, application-layer memory checks are insufficient under concurrent race conditions. The system pushes the non-repudiation barrier into the PostgreSQL storage engine via composite unique keys (`UNIQUE(election_id, voter_id)`).
 2. **Strict Temporal Determinism**: No administrator or actor can manually alter active ballot states. Phases transition dynamically based on atomic UTC comparisons against `registrationStart`, `registrationEnd`, `votingStart`, and `votingEnd`.
 3. **Stateless Security Boundary**: Using Spring Security 6 and JJWT 0.12.6, all requests carry cryptographic identity proof with zero in-memory session baggage on the server.
 4. **Constitutional Lineage Enactment**: A candidate cannot exist in a vacuum. Nominated leaders must be linked to a verified voter account of legal age ($\ge 25$ years old), preventing ghost candidacies.
@@ -139,7 +139,7 @@ The **Online Voting System (OVS)** is an auditable, high-concurrency electronic 
 
 ## 4. Role-Based Access Control (RBAC) & Identity Governance
 
-OVS enforces strict separation of privileges across three primary personas:
+The Online Voting System enforces strict separation of privileges across three primary personas:
 
 ```mermaid
 flowchart TD
