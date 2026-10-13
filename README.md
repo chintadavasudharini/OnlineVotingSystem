@@ -17,6 +17,7 @@
 </p>
 
 [Explore Repository](https://github.com/chintadavasudharini/OnlineVotingSystem) •
+[📖 Deep-Dive Technical Dossier](PROJECT_DETAILS.md) •
 [Report Bug](https://github.com/chintadavasudharini/OnlineVotingSystem/issues) •
 [Request Feature](https://github.com/chintadavasudharini/OnlineVotingSystem/pulls)
 
