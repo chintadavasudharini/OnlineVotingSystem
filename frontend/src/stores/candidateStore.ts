@@ -1,20 +1,19 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User, CandidateRegistration } from '../types';
-import { useAuditStore } from './auditStore';
-import { useElectionStore } from './electionStore';
-import { useVoterStore } from './voterStore';
+import api from '../services/api';
 
 interface CandidateState {
   candidates: User[];
   registrations: CandidateRegistration[];
+  isLoading: boolean;
+  fetchCandidates: () => Promise<void>;
   registerCandidateFromVoter: (params: {
     voterId: string;
     password: string;
-  }) => { success: boolean; candidate?: User; message: string };
+  }) => Promise<{ success: boolean; candidate?: User; message: string }>;
   getCandidateById: (candidateId: string) => User | undefined;
   getCandidateByVoterId: (voterId: string) => User | undefined;
-  getNextCandidateId: () => string;
   registerForElection: (
     candidateId: string,
     electionId: string,
@@ -24,7 +23,7 @@ interface CandidateState {
       keyPromises?: string[];
     },
     electionName?: string
-  ) => { success: boolean; message: string };
+  ) => Promise<{ success: boolean; message: string }>;
   getRegistration: (candidateId: string, electionId: string) => CandidateRegistration | undefined;
   isRegisteredForElection: (candidateId: string, electionId: string) => boolean;
   getCandidatesForElection: (electionId: string) => User[];
@@ -35,90 +34,76 @@ export const useCandidateStore = create<CandidateState>()(
     (set, get) => ({
       candidates: [],
       registrations: [],
+      isLoading: false,
 
-      getNextCandidateId: () => {
-        const { candidates } = get();
-        let maxId = 0;
-        for (const c of candidates) {
-          if (c.id.startsWith('C')) {
-            const num = parseInt(c.id.slice(1), 10);
-            if (!isNaN(num) && num > maxId) {
-              maxId = num;
-            }
+      fetchCandidates: async () => {
+        set({ isLoading: true });
+        try {
+          const response = await api.get('/candidates');
+          if (response.data && response.data.success) {
+            set({ candidates: response.data.data });
           }
+        } catch (err) {
+          console.error('Failed to fetch candidates:', err);
+        } finally {
+          set({ isLoading: false });
         }
-        return `C${maxId + 1}`;
       },
 
       getCandidateById: (candidateId: string) => {
-        return get().candidates.find((c) => c.id === candidateId);
+        return get().candidates.find((c) => c.id.toLowerCase() === candidateId.toLowerCase());
       },
 
       getCandidateByVoterId: (voterId: string) => {
-        return get().candidates.find((c) => c.voterId === voterId);
+        return get().candidates.find(
+          (c) => c.voterId?.toLowerCase() === voterId.toLowerCase()
+        );
       },
 
-      registerCandidateFromVoter: ({ voterId, password }) => {
-        const voter = useVoterStore.getState().getVoterById(voterId);
-        if (!voter) {
-          return {
-            success: false,
-            message: 'No registered voter found with this Voter ID. A candidate must have an existing Voter account.',
-          };
+      registerCandidateFromVoter: async ({ voterId, password }) => {
+        try {
+          const response = await api.post('/auth/register-candidate', {
+            voterId: voterId.trim(),
+            password,
+          });
+
+          if (response.data && response.data.success) {
+            const authData = response.data.data;
+            const newCandidate: User = {
+              id: authData.id,
+              name: authData.name,
+              email: authData.email,
+              dob: authData.dob,
+              age: authData.age,
+              password: '',
+              role: 'CANDIDATE',
+              status: authData.status || 'ACTIVE',
+              voterId: authData.voterId,
+              createdAt: new Date().toISOString(),
+            };
+
+            set((state) => ({
+              candidates: [newCandidate, ...state.candidates.filter((c) => c.id !== newCandidate.id)],
+            }));
+
+            return {
+              success: true,
+              candidate: newCandidate,
+              message: `Candidate account ${newCandidate.id} created successfully!`,
+            };
+          } else {
+            return {
+              success: false,
+              message: response.data?.message || 'Registration failed.',
+            };
+          }
+        } catch (err: any) {
+          const msg =
+            err.response?.data?.message ||
+            err.message ||
+            'Failed to register candidate.';
+          return { success: false, message: msg };
         }
-
-        if (voter.age < 25) {
-          return {
-            success: false,
-            message: `Voter must be 25 years or older to create a Candidate account. (Current age: ${voter.age})`,
-          };
-        }
-
-        if (!password || password.trim().length < 6) {
-          return {
-            success: false,
-            message: 'Candidate password must be at least 6 characters long.',
-          };
-        }
-
-        const existing = get().getCandidateByVoterId(voter.id) || get().candidates.find((c) => c.email === voter.email);
-        if (existing) {
-          return {
-            success: false,
-            message: `A Candidate account (${existing.id}) is already linked to this Voter account.`,
-          };
-        }
-
-        const id = get().getNextCandidateId();
-        const newCandidate: User = {
-          id,
-          name: voter.name,
-          email: voter.email,
-          dob: voter.dob,
-          age: voter.age,
-          password,
-          role: 'CANDIDATE',
-          status: 'ACTIVE',
-          createdAt: new Date().toISOString(),
-          voterId: voter.id,
-        };
-
-        set((state) => ({
-          candidates: [...state.candidates, newCandidate],
-        }));
-
-        useAuditStore.getState().addLog({
-          userId: id,
-          role: 'CANDIDATE',
-          action: 'Candidate Account Created',
-          details: `${id} (${newCandidate.name}) created Candidate account linked to Voter ${voter.id}`,
-        });
-
-        return {
-          success: true,
-          candidate: newCandidate,
-          message: `Candidate account ${id} created successfully!`,
-        };
       },
 
       getRegistration: (candidateId: string, electionId: string) => {
@@ -133,62 +118,53 @@ export const useCandidateStore = create<CandidateState>()(
         );
       },
 
-      registerForElection: (
+      registerForElection: async (
         candidateId: string,
         electionId: string,
         manifesto?: {
           manifestoTitle?: string;
           visionStatement?: string;
           keyPromises?: string[];
-        },
-        electionName?: string
+        }
       ) => {
-        const candidate = get().getCandidateById(candidateId);
-        if (!candidate) {
-          return { success: false, message: 'Candidate not found.' };
+        try {
+          const response = await api.post('/candidates/register-for-election', {
+            electionId,
+            manifestoTitle: manifesto?.manifestoTitle?.trim(),
+            visionStatement: manifesto?.visionStatement?.trim(),
+            keyPromises: manifesto?.keyPromises,
+          });
+
+          if (response.data && response.data.success) {
+            const reg = response.data.data;
+            const newReg: CandidateRegistration = {
+              id: reg.id || `CR-${Date.now()}`,
+              candidateId,
+              electionId,
+              registeredAt: reg.registeredAt || new Date().toISOString(),
+              manifestoTitle: reg.manifestoTitle,
+              visionStatement: reg.visionStatement,
+              keyPromises: reg.keyPromises,
+            };
+
+            set((state) => ({
+              registrations: [...state.registrations, newReg],
+            }));
+
+            return { success: true, message: '✓ You are registered for this election.' };
+          } else {
+            return {
+              success: false,
+              message: response.data?.message || 'Enrollment failed.',
+            };
+          }
+        } catch (err: any) {
+          const msg =
+            err.response?.data?.message ||
+            err.message ||
+            'Failed to enroll candidate into election.';
+          return { success: false, message: msg };
         }
-
-        const election = useElectionStore.getState().getElectionById(electionId);
-        if (!election) {
-          return { success: false, message: 'Election not found.' };
-        }
-
-        const status = useElectionStore.getState().getElectionStatus(election);
-        if (status !== 'REGISTRATION_OPEN') {
-          return {
-            success: false,
-            message: 'Candidate registration is currently closed for this election.',
-          };
-        }
-
-        if (get().isRegisteredForElection(candidateId, electionId)) {
-          return { success: false, message: 'You cannot register twice for the same election.' };
-        }
-
-        const newReg: CandidateRegistration = {
-          id: `CR-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          candidateId,
-          electionId,
-          registeredAt: new Date().toISOString(),
-          manifestoTitle: manifesto?.manifestoTitle?.trim(),
-          visionStatement: manifesto?.visionStatement?.trim(),
-          keyPromises: manifesto?.keyPromises,
-        };
-
-        set((state) => ({
-          registrations: [...state.registrations, newReg],
-        }));
-
-        useAuditStore.getState().addLog({
-          userId: candidateId,
-          role: 'CANDIDATE',
-          action: 'Election Registration',
-          details: `${candidateId} registered for election ${electionName || electionId}${
-            newReg.manifestoTitle ? ` with manifesto: "${newReg.manifestoTitle}"` : ''
-          }`,
-        });
-
-        return { success: true, message: '✓ You are registered for this election.' };
       },
 
       getCandidatesForElection: (electionId: string) => {
@@ -196,8 +172,8 @@ export const useCandidateStore = create<CandidateState>()(
           .registrations.filter((r) => r.electionId === electionId)
           .map((r) => r.candidateId);
 
-        return get().candidates.filter(
-          (c) => registeredCandidateIds.includes(c.id)
+        return get().candidates.filter((c) =>
+          registeredCandidateIds.includes(c.id)
         );
       },
     }),
@@ -206,3 +182,4 @@ export const useCandidateStore = create<CandidateState>()(
     }
   )
 );
+

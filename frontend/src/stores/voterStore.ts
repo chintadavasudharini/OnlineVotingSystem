@@ -1,64 +1,82 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User } from '../types';
-import { useAuditStore } from './auditStore';
+import api from '../services/api';
 
 interface VoterState {
   voters: User[];
-  registerVoter: (data: { name: string; email: string; dob?: string; age: number; password: string }) => User;
+  isLoading: boolean;
+  fetchVoters: () => Promise<void>;
+  registerVoter: (data: { name: string; email: string; dob?: string; age: number; password: string }) => Promise<{ success: boolean; voter?: User; error?: string }>;
   getVoterById: (voterId: string) => User | undefined;
-  getNextVoterId: () => string;
 }
 
 export const useVoterStore = create<VoterState>()(
   persist(
     (set, get) => ({
       voters: [],
+      isLoading: false,
 
-      getNextVoterId: () => {
-        const { voters } = get();
-        let maxId = 0;
-        for (const v of voters) {
-          if (v.id.startsWith('V')) {
-            const num = parseInt(v.id.slice(1), 10);
-            if (!isNaN(num) && num > maxId) {
-              maxId = num;
-            }
+      fetchVoters: async () => {
+        set({ isLoading: true });
+        try {
+          const response = await api.get('/voters');
+          if (response.data && response.data.success) {
+            set({ voters: response.data.data });
           }
+        } catch (err) {
+          console.error('Failed to fetch voters:', err);
+        } finally {
+          set({ isLoading: false });
         }
-        return `V${maxId + 1}`;
       },
 
-      registerVoter: (data) => {
-        const id = get().getNextVoterId();
-        const newVoter: User = {
-          id,
-          name: data.name,
-          email: data.email,
-          dob: data.dob,
-          age: data.age,
-          password: data.password,
-          role: 'VOTER',
-          status: 'ACTIVE',
-          createdAt: new Date().toISOString(),
-        };
+      registerVoter: async (data) => {
+        try {
+          const response = await api.post('/auth/register-voter', {
+            name: data.name,
+            email: data.email,
+            dob: data.dob,
+            age: data.age,
+            password: data.password,
+          });
 
-        set((state) => ({
-          voters: [...state.voters, newVoter],
-        }));
+          if (response.data && response.data.success) {
+            const authData = response.data.data;
+            const newVoter: User = {
+              id: authData.id,
+              name: authData.name,
+              email: authData.email,
+              dob: authData.dob,
+              age: authData.age,
+              password: '',
+              role: 'VOTER',
+              status: authData.status || 'ACTIVE',
+              createdAt: new Date().toISOString(),
+            };
 
-        useAuditStore.getState().addLog({
-          userId: id,
-          role: 'VOTER',
-          action: 'Registration',
-          details: `${id} (${newVoter.name}) registered as Voter`,
-        });
+            set((state) => ({
+              voters: [newVoter, ...state.voters.filter((v) => v.id !== newVoter.id)],
+            }));
 
-        return newVoter;
+            return { success: true, voter: newVoter };
+          } else {
+            return {
+              success: false,
+              error: response.data?.message || 'Registration failed.',
+            };
+          }
+        } catch (err: any) {
+          const errorMsg =
+            err.response?.data?.message ||
+            err.message ||
+            'Registration request failed.';
+          return { success: false, error: errorMsg };
+        }
       },
 
       getVoterById: (voterId: string) => {
-        return get().voters.find((v) => v.id === voterId);
+        return get().voters.find((v) => v.id.toLowerCase() === voterId.toLowerCase());
       },
     }),
     {
@@ -66,3 +84,4 @@ export const useVoterStore = create<VoterState>()(
     }
   )
 );
+

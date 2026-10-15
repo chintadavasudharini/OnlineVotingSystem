@@ -1,20 +1,21 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Election, ElectionStatus } from '../types';
-import { useVoterStore } from './voterStore';
-import { useCandidateStore } from './candidateStore';
+import api from '../services/api';
 
 export { isVoterEligible, isCandidateEligible } from '../utils/eligibility';
 
 interface ElectionState {
   elections: Election[];
+  isLoading: boolean;
+  fetchElections: () => Promise<void>;
   createElection: (
     data: Omit<
       Election,
       'id' | 'resultsPublished' | 'createdAt' | 'eligibleVoterIds' | 'eligibleCandidateIds'
     >
-  ) => Election;
-  publishResults: (electionId: string) => void;
+  ) => Promise<{ success: boolean; election?: Election; error?: string }>;
+  publishResults: (electionId: string) => Promise<{ success: boolean; error?: string }>;
   getElectionById: (id: string) => Election | undefined;
   getElectionStatus: (election: Election, referenceTime?: Date) => ElectionStatus;
 }
@@ -44,43 +45,119 @@ export const useElectionStore = create<ElectionState>()(
   persist(
     (set, get) => ({
       elections: [],
+      isLoading: false,
+
+      fetchElections: async () => {
+        set({ isLoading: true });
+        try {
+          const response = await api.get('/elections');
+          if (response.data && response.data.success) {
+            const backendElections: Election[] = response.data.data.map((e: any) => ({
+              id: e.id,
+              name: e.title || e.name,
+              description: e.description,
+              registrationStart: e.registrationStart,
+              registrationEnd: e.registrationEnd,
+              votingStart: e.votingStart,
+              votingEnd: e.votingEnd,
+              resultsPublished: e.resultsPublished,
+              createdAt: e.createdAt,
+              eligibleVoterIds: [],
+              eligibleCandidateIds: [],
+            }));
+            set({ elections: backendElections });
+          }
+        } catch (err) {
+          console.error('Failed to load elections from backend:', err);
+        } finally {
+          set({ isLoading: false });
+        }
+      },
 
       getElectionStatus: (election, referenceTime) => {
         return calculateElectionStatus(election, referenceTime);
       },
 
       getElectionById: (id: string) => {
-        return get().elections.find((e) => e.id === id);
+        return get().elections.find((e) => e.id.toLowerCase() === id.toLowerCase());
       },
 
-      createElection: (data) => {
-        const id = `E${get().elections.length + 1}`;
-        const createdAt = new Date().toISOString();
-        const eligibleVoterIds = useVoterStore.getState().voters.map((v) => v.id);
-        const eligibleCandidateIds = useCandidateStore.getState().candidates.map((c) => c.id);
+      createElection: async (data) => {
+        try {
+          const payload = {
+            title: data.name,
+            description: data.description,
+            registrationStart: data.registrationStart.includes('.')
+              ? data.registrationStart.split('.')[0]
+              : data.registrationStart.replace('Z', ''),
+            registrationEnd: data.registrationEnd.includes('.')
+              ? data.registrationEnd.split('.')[0]
+              : data.registrationEnd.replace('Z', ''),
+            votingStart: data.votingStart.includes('.')
+              ? data.votingStart.split('.')[0]
+              : data.votingStart.replace('Z', ''),
+            votingEnd: data.votingEnd.includes('.')
+              ? data.votingEnd.split('.')[0]
+              : data.votingEnd.replace('Z', ''),
+          };
 
-        const newElection: Election = {
-          ...data,
-          id,
-          createdAt,
-          eligibleVoterIds,
-          eligibleCandidateIds,
-          resultsPublished: false,
-        };
+          const response = await api.post('/elections', payload);
 
-        set((state) => ({
-          elections: [newElection, ...state.elections],
-        }));
+          if (response.data && response.data.success) {
+            const e = response.data.data;
+            const newElection: Election = {
+              id: e.id,
+              name: e.title || data.name,
+              description: e.description,
+              registrationStart: e.registrationStart,
+              registrationEnd: e.registrationEnd,
+              votingStart: e.votingStart,
+              votingEnd: e.votingEnd,
+              resultsPublished: e.resultsPublished || false,
+              createdAt: e.createdAt || new Date().toISOString(),
+              eligibleVoterIds: [],
+              eligibleCandidateIds: [],
+            };
 
-        return newElection;
+            set((state) => ({
+              elections: [newElection, ...state.elections.filter((x) => x.id !== newElection.id)],
+            }));
+
+            return { success: true, election: newElection };
+          } else {
+            return {
+              success: false,
+              error: response.data?.message || 'Failed to create election.',
+            };
+          }
+        } catch (err: any) {
+          const msg =
+            err.response?.data?.message ||
+            err.message ||
+            'Error creating election on backend.';
+          return { success: false, error: msg };
+        }
       },
 
-      publishResults: (electionId: string) => {
-        set((state) => ({
-          elections: state.elections.map((e) =>
-            e.id === electionId ? { ...e, resultsPublished: true } : e
-          ),
-        }));
+      publishResults: async (electionId: string) => {
+        try {
+          const response = await api.post(`/elections/${electionId}/publish-results`);
+          if (response.data && response.data.success) {
+            set((state) => ({
+              elections: state.elections.map((e) =>
+                e.id.toLowerCase() === electionId.toLowerCase() ? { ...e, resultsPublished: true } : e
+              ),
+            }));
+            return { success: true };
+          } else {
+            return { success: false, error: response.data?.message || 'Publishing failed.' };
+          }
+        } catch (err: any) {
+          return {
+            success: false,
+            error: err.response?.data?.message || err.message || 'Error publishing results.',
+          };
+        }
       },
     }),
     {

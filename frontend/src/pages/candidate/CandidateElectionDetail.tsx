@@ -54,7 +54,7 @@ export const CandidateElectionDetail: React.FC = () => {
     return s === 'REGISTRATION_OPEN';
   });
 
-  const handleSubmitRegistration = (e: React.FormEvent) => {
+  const handleSubmitRegistration = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!currentUser || !election) return;
     setFormError(null);
@@ -86,7 +86,7 @@ export const CandidateElectionDetail: React.FC = () => {
       return;
     }
 
-    const res = registerForElection(
+    const res = await registerForElection(
       currentUser.id,
       election.id,
       {

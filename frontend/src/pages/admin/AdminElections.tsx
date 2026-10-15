@@ -23,6 +23,10 @@ export const AdminElections: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    useElectionStore.getState().fetchElections();
+  }, []);
+
   // Form state
   const getInitialFormData = (): ElectionCreationFormData => {
     const today = new Date().toISOString().split('T')[0];
@@ -57,7 +61,7 @@ export const AdminElections: React.FC = () => {
     }
   };
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
+  const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormErrors({});
 
@@ -80,7 +84,7 @@ export const AdminElections: React.FC = () => {
     const voteStart = `${formData.votingStartDate}T${formData.votingStartTime}:00`;
     const voteEnd = `${formData.votingEndDate}T${formData.votingEndTime}:00`;
 
-    const newElection = createElection({
+    const res = await createElection({
       name: formData.name,
       description: formData.description,
       registrationStart: new Date(regStart).toISOString(),
@@ -89,11 +93,13 @@ export const AdminElections: React.FC = () => {
       votingEnd: new Date(voteEnd).toISOString(),
     });
 
-    setIsModalOpen(false);
-    setSuccessToast(`Election "${newElection.name}" created successfully!`);
-
-    // Reset form
-    setFormData(getInitialFormData());
+    if (res.success && res.election) {
+      setIsModalOpen(false);
+      setSuccessToast(`Election "${res.election.name}" created successfully!`);
+      setFormData(getInitialFormData());
+    } else {
+      setFormErrors({ general: res.error || 'Failed to create election.' });
+    }
   };
 
   return (

@@ -1,123 +1,96 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { User, Role } from '../types';
-import { useVoterStore } from './voterStore';
-import { useCandidateStore } from './candidateStore';
-import { useAuditStore } from './auditStore';
+import api from '../services/api';
 
 interface AuthState {
   currentUser: User | null;
   isAuthenticated: boolean;
   role: Role | null;
+  token: string | null;
   login: (
     identifier: string,
     password: string,
     intendedRole: Role
-  ) => { success: boolean; error?: string };
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  setUser: (user: User, token: string) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       currentUser: null,
       isAuthenticated: false,
       role: null,
+      token: null,
 
-      login: (identifier, password, intendedRole) => {
+      setUser: (user: User, token: string) => {
+        localStorage.setItem('voting_auth_token', token);
+        set({
+          currentUser: user,
+          isAuthenticated: true,
+          role: user.role,
+          token,
+        });
+      },
+
+      login: async (identifier, password, intendedRole) => {
         const trimmedId = identifier.trim();
 
-        if (intendedRole === 'ADMIN') {
-          if (trimmedId.toLowerCase() === 'admin' && password === 'admin') {
-            const adminUser: User = {
-              id: 'admin',
-              name: 'System Administrator',
-              email: 'admin@system.local',
-              age: 99,
+        try {
+          const response = await api.post('/auth/login', {
+            identifier: trimmedId,
+            password,
+            role: intendedRole,
+          });
+
+          if (response.data && response.data.success) {
+            const data = response.data.data;
+            const token = data.token;
+            const user: User = {
+              id: data.id,
+              name: data.name,
+              email: data.email,
+              dob: data.dob,
+              age: data.age,
               password: '',
-              role: 'ADMIN',
-              status: 'ACTIVE',
+              role: data.role as Role,
+              status: data.status,
+              voterId: data.voterId,
             };
+
+            localStorage.setItem('voting_auth_token', token);
             set({
-              currentUser: adminUser,
+              currentUser: user,
               isAuthenticated: true,
-              role: 'ADMIN',
+              role: user.role,
+              token,
             });
+
             return { success: true };
           } else {
-            return { success: false, error: 'Invalid admin credentials.' };
+            return {
+              success: false,
+              error: response.data?.message || 'Login failed. Please check your credentials.',
+            };
           }
+        } catch (error: any) {
+          const errMsg =
+            error.response?.data?.message ||
+            error.message ||
+            'Unable to connect to authentication server.';
+          return { success: false, error: errMsg };
         }
-
-        if (intendedRole === 'VOTER') {
-          const voters = useVoterStore.getState().voters;
-          const voter = voters.find(
-            (v) => v.id.toLowerCase() === trimmedId.toLowerCase()
-          );
-
-          if (!voter || voter.password !== password) {
-            return { success: false, error: 'Invalid Voter ID or password.' };
-          }
-
-          set({
-            currentUser: voter,
-            isAuthenticated: true,
-            role: 'VOTER',
-          });
-
-          useAuditStore.getState().addLog({
-            userId: voter.id,
-            role: 'VOTER',
-            action: 'Login',
-            details: `${voter.id} (${voter.name}) logged in`,
-          });
-
-          return { success: true };
-        }
-
-        if (intendedRole === 'CANDIDATE') {
-          const candidates = useCandidateStore.getState().candidates;
-          const candidate = candidates.find(
-            (c) => c.id.toLowerCase() === trimmedId.toLowerCase()
-          );
-
-          if (!candidate || candidate.password !== password) {
-            return { success: false, error: 'Invalid Candidate ID or password.' };
-          }
-
-          set({
-            currentUser: candidate,
-            isAuthenticated: true,
-            role: 'CANDIDATE',
-          });
-
-          useAuditStore.getState().addLog({
-            userId: candidate.id,
-            role: 'CANDIDATE',
-            action: 'Login',
-            details: `${candidate.id} (${candidate.name}) logged in`,
-          });
-
-          return { success: true };
-        }
-
-        return { success: false, error: 'Invalid login role.' };
       },
 
       logout: () => {
-        const { currentUser } = get();
-        if (currentUser && currentUser.role !== 'ADMIN') {
-          useAuditStore.getState().addLog({
-            userId: currentUser.id,
-            role: currentUser.role,
-            action: 'Logout',
-            details: `${currentUser.id} logged out`,
-          });
-        }
+        localStorage.removeItem('voting_auth_token');
         set({
           currentUser: null,
           isAuthenticated: false,
           role: null,
+          token: null,
         });
       },
     }),
@@ -126,3 +99,4 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+

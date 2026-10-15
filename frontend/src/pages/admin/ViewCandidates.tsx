@@ -6,6 +6,10 @@ export const ViewCandidates: React.FC = () => {
   const candidates = useCandidateStore((state) => state.candidates);
   const [searchQuery, setSearchQuery] = useState('');
 
+  React.useEffect(() => {
+    useCandidateStore.getState().fetchCandidates();
+  }, []);
+
   const filteredCandidates = candidates.filter(
     (c) =>
       c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||

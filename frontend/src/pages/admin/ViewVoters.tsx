@@ -6,6 +6,10 @@ export const ViewVoters: React.FC = () => {
   const voters = useVoterStore((state) => state.voters);
   const [searchQuery, setSearchQuery] = useState('');
 
+  React.useEffect(() => {
+    useVoterStore.getState().fetchVoters();
+  }, []);
+
   const filteredVoters = voters.filter(
     (v) =>
       v.id.toLowerCase().includes(searchQuery.toLowerCase()) ||

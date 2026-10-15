@@ -11,6 +11,10 @@ export const PublicElectionsPage: React.FC = () => {
   const elections = useElectionStore((state) => state.elections);
   const getElectionStatus = useElectionStore((state) => state.getElectionStatus);
 
+  React.useEffect(() => {
+    useElectionStore.getState().fetchElections();
+  }, []);
+
   return (
     <div className="container" style={{ padding: '2rem 1.25rem 4rem' }}>
       <div style={{ marginBottom: '2rem', textAlign: 'center' }}>

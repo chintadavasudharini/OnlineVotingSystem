@@ -1,10 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Vote, CandidateResult, User } from '../types';
-import { useAuditStore } from './auditStore';
-import { useElectionStore } from './electionStore';
-import { useVoterStore } from './voterStore';
-import { isVoterEligible } from '../utils/eligibility';
+import api from '../services/api';
 
 interface VoteState {
   votes: Vote[];
@@ -13,9 +10,11 @@ interface VoteState {
     electionId: string;
     candidateId: string;
     electionName?: string;
-  }) => { success: boolean; message: string };
+  }) => Promise<{ success: boolean; message: string }>;
   hasVoted: (voterId: string, electionId: string) => boolean;
+  checkHasVoted: (electionId: string) => Promise<boolean>;
   getVotesForElection: (electionId: string) => Vote[];
+  fetchResults: (electionId: string) => Promise<{ results: CandidateResult[]; totalVotes: number }>;
   getElectionResults: (electionId: string, candidates: User[]) => {
     results: CandidateResult[];
     totalVotes: number;
@@ -31,68 +30,79 @@ export const useVoteStore = create<VoteState>()(
         return get().votes.some((v) => v.voterId === voterId && v.electionId === electionId);
       },
 
-      castVote: ({ voterId, electionId, candidateId, electionName }) => {
-        const voter = useVoterStore.getState().getVoterById(voterId);
-        if (!voter) {
-          return {
-            success: false,
-            message: 'A voter must have a valid Voter account.',
-          };
+      checkHasVoted: async (electionId: string) => {
+        try {
+          const response = await api.get(`/votes/has-voted/${electionId}`);
+          if (response.data && response.data.success) {
+            return !!response.data.data;
+          }
+          return false;
+        } catch {
+          return false;
         }
+      },
 
-        const election = useElectionStore.getState().getElectionById(electionId);
-        if (!election) {
-          return {
-            success: false,
-            message: 'Election not found.',
-          };
+      castVote: async ({ voterId, electionId, candidateId }) => {
+        try {
+          const response = await api.post('/votes/cast', {
+            electionId,
+            candidateId,
+          });
+
+          if (response.data && response.data.success) {
+            const recorded = response.data.data;
+            const newVote: Vote = {
+              id: recorded.id?.toString() || `VOTE-${Date.now()}`,
+              electionId,
+              voterId,
+              candidateId,
+              votedAt: recorded.votedAt || new Date().toISOString(),
+            };
+
+            set((state) => ({
+              votes: [...state.votes, newVote],
+            }));
+
+            return {
+              success: true,
+              message: '✓ Vote Submitted Successfully. Your vote has been recorded securely.',
+            };
+          } else {
+            return {
+              success: false,
+              message: response.data?.message || 'Vote casting failed.',
+            };
+          }
+        } catch (err: any) {
+          const msg =
+            err.response?.data?.message ||
+            err.message ||
+            'Unable to submit ballot to voting server.';
+          return { success: false, message: msg };
         }
+      },
 
-        const status = useElectionStore.getState().getElectionStatus(election);
-        if (status !== 'VOTING_OPEN') {
-          return {
-            success: false,
-            message: 'Voting is not currently open for this election.',
-          };
+      fetchResults: async (electionId: string) => {
+        try {
+          const response = await api.get(`/votes/results/${electionId}`);
+          if (response.data && response.data.success) {
+            const data = response.data.data;
+            const results: CandidateResult[] = (data.candidateResults || []).map((r: any) => ({
+              candidateId: r.candidateId,
+              candidateName: r.candidateName,
+              votes: r.votesReceived || 0,
+              percentage: Math.round(r.votePercentage || 0),
+            }));
+
+            return {
+              results,
+              totalVotes: data.totalVotes || 0,
+            };
+          }
+        } catch (err) {
+          console.error('Error fetching results:', err);
         }
-
-        if (!isVoterEligible(election, voterId, voter)) {
-          return {
-            success: false,
-            message: 'You are not eligible to vote in this election because your voter account was registered after the voting period started.',
-          };
-        }
-
-        if (get().hasVoted(voterId, electionId)) {
-          return {
-            success: false,
-            message: 'You have already voted in this election. A voter can cast only one vote per election.',
-          };
-        }
-
-        const newVote: Vote = {
-          id: `VOTE-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          electionId,
-          voterId,
-          candidateId,
-          votedAt: new Date().toISOString(),
-        };
-
-        set((state) => ({
-          votes: [...state.votes, newVote],
-        }));
-
-        useAuditStore.getState().addLog({
-          userId: voterId,
-          role: 'VOTER',
-          action: 'Cast Vote',
-          details: `${voterId} cast vote in ${electionName || electionId}`,
-        });
-
-        return {
-          success: true,
-          message: '✓ Vote Submitted Successfully. Your vote has been recorded.',
-        };
+        return { results: [], totalVotes: 0 };
       },
 
       getVotesForElection: (electionId: string) => {
@@ -103,7 +113,6 @@ export const useVoteStore = create<VoteState>()(
         const electionVotes = get().getVotesForElection(electionId);
         const totalVotes = electionVotes.length;
 
-        // Group votes per candidate
         const voteCounts: Record<string, number> = {};
         for (const candidate of candidates) {
           voteCounts[candidate.id] = 0;
@@ -123,7 +132,6 @@ export const useVoteStore = create<VoteState>()(
           };
         });
 
-        // Sort descending by votes
         results.sort((a, b) => b.votes - a.votes);
 
         return {
@@ -137,3 +145,4 @@ export const useVoteStore = create<VoteState>()(
     }
   )
 );
+

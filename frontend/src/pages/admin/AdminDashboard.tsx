@@ -17,6 +17,12 @@ export const AdminDashboard: React.FC = () => {
   const elections = useElectionStore((state) => state.elections);
   const getElectionStatus = useElectionStore((state) => state.getElectionStatus);
 
+  React.useEffect(() => {
+    useVoterStore.getState().fetchVoters();
+    useCandidateStore.getState().fetchCandidates();
+    useElectionStore.getState().fetchElections();
+  }, []);
+
   // Voter stats
   const totalVoters = voters.length;
 

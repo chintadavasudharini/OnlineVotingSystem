@@ -12,11 +12,11 @@ export const AdminLogin: React.FC = () => {
   const login = useAuthStore((state) => state.login);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
-    const res = login(username, password, 'ADMIN');
+    const res = await login(username, password, 'ADMIN');
     if (res.success) {
       navigate('/admin/dashboard');
     } else {

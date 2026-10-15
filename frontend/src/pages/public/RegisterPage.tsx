@@ -42,9 +42,7 @@ export const RegisterPage: React.FC = () => {
   const [successInfo, setSuccessInfo] = useState<{ id: string; role: RegistrationRole; voterId?: string } | null>(null);
 
   const registerVoter = useVoterStore((state) => state.registerVoter);
-  const getVoterById = useVoterStore((state) => state.getVoterById);
   const registerCandidateFromVoter = useCandidateStore((state) => state.registerCandidateFromVoter);
-  const getCandidateByVoterId = useCandidateStore((state) => state.getCandidateByVoterId);
 
   const calculatedAge = voterData.dob ? calculateAge(voterData.dob) : null;
   const isVoterAgeEligible = calculatedAge !== null && calculatedAge >= 18;
@@ -78,7 +76,7 @@ export const RegisterPage: React.FC = () => {
     }
   };
 
-  const handleVoterSubmit = (e: React.FormEvent) => {
+  const handleVoterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
@@ -105,7 +103,7 @@ export const RegisterPage: React.FC = () => {
 
     const age = calculateAge(result.data.dob);
 
-    const createdVoter = registerVoter({
+    const res = await registerVoter({
       name: result.data.name,
       email: result.data.email,
       dob: result.data.dob,
@@ -113,10 +111,14 @@ export const RegisterPage: React.FC = () => {
       password: result.data.password,
     });
 
-    setSuccessInfo({ id: createdVoter.id, role: 'VOTER' });
+    if (res.success && res.voter) {
+      setSuccessInfo({ id: res.voter.id, role: 'VOTER' });
+    } else {
+      setErrors({ email: res.error || 'Registration failed.' });
+    }
   };
 
-  const handleCandidateSubmit = (e: React.FormEvent) => {
+  const handleCandidateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
 
@@ -144,31 +146,8 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
-    const voter = getVoterById(trimmedVoterId);
-    if (!voter) {
-      setErrors({
-        voterId: 'No registered voter found with this Voter ID. A candidate must have an existing Voter account.',
-      });
-      return;
-    }
-
-    if (voter.age < 25) {
-      setErrors({
-        voterId: `Voter must be 25 years or older to create a Candidate account. (Current age: ${voter.age})`,
-      });
-      return;
-    }
-
-    const existingCandidate = getCandidateByVoterId(voter.id);
-    if (existingCandidate) {
-      setErrors({
-        voterId: `A Candidate account (${existingCandidate.id}) is already registered for this Voter account.`,
-      });
-      return;
-    }
-
-    const result = registerCandidateFromVoter({
-      voterId: voter.id,
+    const result = await registerCandidateFromVoter({
+      voterId: trimmedVoterId,
       password: candidateData.password,
     });
 
@@ -180,7 +159,7 @@ export const RegisterPage: React.FC = () => {
     setSuccessInfo({
       id: result.candidate.id,
       role: 'CANDIDATE',
-      voterId: voter.id,
+      voterId: trimmedVoterId,
     });
   };
 

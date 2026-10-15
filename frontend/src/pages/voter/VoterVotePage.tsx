@@ -63,10 +63,10 @@ export const VoterVotePage: React.FC = () => {
     setConfirmModalOpen(true);
   };
 
-  const handleConfirmVote = () => {
+  const handleConfirmVote = async () => {
     if (!currentUser || !selectedCandidateId) return;
 
-    const result = castVote({
+    const result = await castVote({
       voterId: currentUser.id,
       electionId: election.id,
       candidateId: selectedCandidateId,

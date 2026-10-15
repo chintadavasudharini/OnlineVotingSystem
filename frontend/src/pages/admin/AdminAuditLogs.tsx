@@ -9,6 +9,10 @@ export const AdminAuditLogs: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('ALL');
 
+  React.useEffect(() => {
+    useAuditStore.getState().fetchLogs();
+  }, []);
+
   // Filter strictly for voters and candidates only (excluding admin)
   const voterAndCandidateLogs = logs.filter(
     (log) => log.role === 'VOTER' || log.role === 'CANDIDATE'

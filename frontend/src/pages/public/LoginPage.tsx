@@ -23,7 +23,7 @@ export const LoginPage: React.FC = () => {
     setErrorMessage(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -32,7 +32,7 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    const result = login(id, password, role);
+    const result = await login(id, password, role);
 
     if (result.success) {
       if (role === 'VOTER') {
