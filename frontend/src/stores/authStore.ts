@@ -17,13 +17,47 @@ interface AuthState {
   setUser: (user: User, token: string) => void;
 }
 
+const getInitialAuth = () => {
+  try {
+    const raw = localStorage.getItem('voting_auth_session');
+    const token = localStorage.getItem('voting_auth_token');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.state && parsed.state.currentUser && (parsed.state.token || token)) {
+        return {
+          currentUser: parsed.state.currentUser,
+          isAuthenticated: true,
+          role: parsed.state.role || parsed.state.currentUser.role,
+          token: parsed.state.token || token,
+        };
+      }
+    }
+    if (token) {
+      return {
+        currentUser: null,
+        isAuthenticated: false,
+        role: null,
+        token,
+      };
+    }
+  } catch {}
+  return {
+    currentUser: null,
+    isAuthenticated: false,
+    role: null,
+    token: null,
+  };
+};
+
+const initialAuth = getInitialAuth();
+
 export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
-      currentUser: null,
-      isAuthenticated: false,
-      role: null,
-      token: null,
+      currentUser: initialAuth.currentUser,
+      isAuthenticated: initialAuth.isAuthenticated,
+      role: initialAuth.role,
+      token: initialAuth.token,
 
       setUser: (user: User, token: string) => {
         localStorage.setItem('voting_auth_token', token);

@@ -30,9 +30,10 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Clear token and redirect to login if unauthorized
+    if (error.response?.status === 401 && error.config?.headers?.Authorization) {
+      // Clear token only if authenticated request failed with 401
       localStorage.removeItem('voting_auth_token');
+      localStorage.removeItem('voting_auth_session');
     }
     return Promise.reject(error);
   }
