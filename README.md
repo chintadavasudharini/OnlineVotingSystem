@@ -18,6 +18,7 @@
 
 [Explore Repository](https://github.com/chintadavasudharini/OnlineVotingSystem) •
 [📖 Deep-Dive Technical Dossier](PROJECT_DETAILS.md) •
+[📰 LinkedIn Article](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/) •
 [Report Bug](https://github.com/chintadavasudharini/OnlineVotingSystem/issues) •
 [Request Feature](https://github.com/chintadavasudharini/OnlineVotingSystem/pulls)
 
@@ -366,6 +367,7 @@ An enterprise Postman collection is included in the root directory:
 Developed with ❤️ by **[Chintada Vasudharini](https://github.com/chintadavasudharini)**.
 
 - **GitHub Repository**: [https://github.com/chintadavasudharini/OnlineVotingSystem](https://github.com/chintadavasudharini/OnlineVotingSystem)
+- **LinkedIn Article**: [Online Voting System — Enterprise Architecture & System Invariants](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/)
 - Issues and Pull Requests are welcomed! Please follow standard Git commit conventions.
 
 ---

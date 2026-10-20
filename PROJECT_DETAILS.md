@@ -4,7 +4,7 @@
 
 **Document Version:** `1.0.0-RELEASE` | **Status:** `Production Ready` | **Engineering Tier:** `Enterprise / Senior Staff`  
 **Author & Lead Architect:** [Chintada Vasudharini](https://github.com/chintadavasudharini)  
-**Repository:** [https://github.com/chintadavasudharini/OnlineVotingSystem](https://github.com/chintadavasudharini/OnlineVotingSystem)
+**Repository:** [https://github.com/chintadavasudharini/OnlineVotingSystem](https://github.com/chintadavasudharini/OnlineVotingSystem) | **LinkedIn Publication:** [Read Article](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/)
 
 [![Java 21](https://img.shields.io/badge/Language-Java%2021%20LTS-007396?style=flat-square&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
 [![Spring Boot 3.3.4](https://img.shields.io/badge/Framework-Spring%20Boot%203.3.4-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
