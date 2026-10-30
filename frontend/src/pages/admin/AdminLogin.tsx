@@ -16,6 +16,7 @@ export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
 
   React.useEffect(() => {
+    document.title = 'Admin Login | Online Voting System';
     if (isHydrated && isAuthenticated && role === 'ADMIN') {
       navigate('/admin/dashboard', { replace: true });
     }
@@ -60,10 +61,10 @@ export const AdminLogin: React.FC = () => {
             <ShieldAlert size={32} />
           </div>
           <h1 style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.02em', color: '#ffffff' }}>
-            System Administrator
+            Admin Login
           </h1>
           <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginTop: '0.35rem' }}>
-            Authorized election administrator access only
+            System Administrator & Election Console Access
           </p>
         </div>
 
