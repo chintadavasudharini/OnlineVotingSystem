@@ -380,17 +380,24 @@ export const VoterVotePage: React.FC = () => {
                               <div style={{ fontSize: '0.775rem', fontWeight: 700, color: '#c2410c', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '2px' }}>
                                 Key Promises:
                               </div>
-                              {reg?.keyPromises && reg.keyPromises.length > 0 ? (
-                                <ul style={{ margin: '3px 0 0', paddingLeft: '1.2rem', fontSize: '0.825rem', color: '#334155', lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                                  {reg.keyPromises.map((p, pIdx) => (
-                                    <li key={pIdx}>{p}</li>
-                                  ))}
-                                </ul>
-                              ) : (
-                                <div style={{ fontSize: '0.825rem', color: '#64748b', fontStyle: 'italic' }}>
-                                  Not specified
-                                </div>
-                              )}
+                              {(() => {
+                                const promises = Array.isArray(reg?.keyPromises)
+                                  ? reg.keyPromises
+                                  : typeof reg?.keyPromises === 'string'
+                                  ? (reg.keyPromises as string).split('\n').map((p) => p.trim()).filter(Boolean)
+                                  : [];
+                                return promises.length > 0 ? (
+                                  <ul style={{ margin: '3px 0 0', paddingLeft: '1.2rem', fontSize: '0.825rem', color: '#334155', lineHeight: 1.5, display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                                    {promises.map((p, pIdx) => (
+                                      <li key={pIdx}>{p}</li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  <div style={{ fontSize: '0.825rem', color: '#64748b', fontStyle: 'italic' }}>
+                                    Not specified
+                                  </div>
+                                );
+                              })()}
                             </div>
                           </div>
                         </div>

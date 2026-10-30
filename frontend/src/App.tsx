@@ -36,10 +36,12 @@ import { ViewCandidates } from './pages/admin/ViewCandidates';
 import { AdminElections } from './pages/admin/AdminElections';
 import { AdminAuditLogs } from './pages/admin/AdminAuditLogs';
 import { AdminResults } from './pages/admin/AdminResults';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 
 export const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
       <Routes>
         {/* Public Routes */}
         <Route element={<PublicLayout />}>
@@ -113,6 +115,7 @@ export const App: React.FC = () => {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 };
 

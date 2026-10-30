@@ -3,6 +3,21 @@ import { persist } from 'zustand/middleware';
 import type { User, CandidateRegistration } from '../types';
 import api from '../services/api';
 
+export const normalizeKeyPromises = (promises: any): string[] => {
+  if (Array.isArray(promises)) {
+    return promises
+      .map((p) => (typeof p === 'string' ? p.trim() : String(p || '')))
+      .filter((p) => p.length > 0);
+  }
+  if (typeof promises === 'string') {
+    return promises
+      .split('\n')
+      .map((p) => p.trim())
+      .filter((p) => p.length > 0);
+  }
+  return [];
+};
+
 interface CandidateState {
   candidates: User[];
   registrations: CandidateRegistration[];
@@ -109,14 +124,23 @@ export const useCandidateStore = create<CandidateState>()(
       },
 
       getRegistration: (candidateId: string, electionId: string) => {
-        return get().registrations.find(
-          (reg) => reg.candidateId === candidateId && reg.electionId === electionId
+        const found = get().registrations.find(
+          (reg) =>
+            reg.candidateId?.toLowerCase() === candidateId?.toLowerCase() &&
+            reg.electionId?.toLowerCase() === electionId?.toLowerCase()
         );
+        if (!found) return undefined;
+        return {
+          ...found,
+          keyPromises: normalizeKeyPromises(found.keyPromises),
+        };
       },
 
       isRegisteredForElection: (candidateId: string, electionId: string) => {
         return get().registrations.some(
-          (reg) => reg.candidateId === candidateId && reg.electionId === electionId
+          (reg) =>
+            reg.candidateId?.toLowerCase() === candidateId?.toLowerCase() &&
+            reg.electionId?.toLowerCase() === electionId?.toLowerCase()
         );
       },
 
@@ -157,7 +181,7 @@ export const useCandidateStore = create<CandidateState>()(
               registeredAt: item.registeredAt || new Date().toISOString(),
               manifestoTitle: item.manifestoTitle,
               visionStatement: item.visionStatement,
-              keyPromises: item.keyPromises || [],
+              keyPromises: normalizeKeyPromises(item.keyPromises),
             }));
 
             set((state) => {
@@ -202,18 +226,28 @@ export const useCandidateStore = create<CandidateState>()(
 
           if (response.data && response.data.success) {
             const reg = response.data.data;
+            const parsedPromises = normalizeKeyPromises(reg?.keyPromises || manifesto?.keyPromises);
             const newReg: CandidateRegistration = {
-              id: reg.id || `CR-${Date.now()}`,
+              id: reg?.id ? String(reg.id) : `CR-${Date.now()}`,
               candidateId,
               electionId,
-              registeredAt: reg.registeredAt || new Date().toISOString(),
-              manifestoTitle: reg.manifestoTitle,
-              visionStatement: reg.visionStatement,
-              keyPromises: reg.keyPromises,
+              registeredAt: reg?.registeredAt || new Date().toISOString(),
+              manifestoTitle: reg?.manifestoTitle || manifesto?.manifestoTitle,
+              visionStatement: reg?.visionStatement || manifesto?.visionStatement,
+              keyPromises: parsedPromises,
             };
 
             set((state) => ({
-              registrations: [...state.registrations, newReg],
+              registrations: [
+                ...state.registrations.filter(
+                  (r) =>
+                    !(
+                      r.candidateId?.toLowerCase() === candidateId.toLowerCase() &&
+                      r.electionId?.toLowerCase() === electionId.toLowerCase()
+                    )
+                ),
+                newReg,
+              ],
             }));
 
             return { success: true, message: '✓ You are registered for this election.' };
@@ -234,16 +268,24 @@ export const useCandidateStore = create<CandidateState>()(
 
       getCandidatesForElection: (electionId: string) => {
         const registeredCandidateIds = get()
-          .registrations.filter((r) => r.electionId === electionId)
+          .registrations.filter((r) => r.electionId?.toLowerCase() === electionId?.toLowerCase())
           .map((r) => r.candidateId);
 
         return get().candidates.filter((c) =>
-          registeredCandidateIds.includes(c.id)
+          registeredCandidateIds.some((candId) => candId.toLowerCase() === c.id.toLowerCase())
         );
       },
     }),
     {
       name: 'voting_candidates',
+      onRehydrateStorage: () => (state) => {
+        if (state && Array.isArray(state.registrations)) {
+          state.registrations = state.registrations.map((r) => ({
+            ...r,
+            keyPromises: normalizeKeyPromises(r.keyPromises),
+          }));
+        }
+      },
     }
   )
 );

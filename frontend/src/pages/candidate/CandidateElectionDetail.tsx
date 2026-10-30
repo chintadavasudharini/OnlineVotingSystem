@@ -7,6 +7,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useCurrentTime } from '../../hooks/useCurrentTime';
 import { Badge } from '../../components/common/Badge';
 import { formatDateTime } from '../../utils/dateFormatter';
+import { ErrorBoundary } from '../../components/common/ErrorBoundary';
 
 export const CandidateElectionDetail: React.FC = () => {
   const { electionId } = useParams<{ electionId: string }>();
@@ -84,6 +85,18 @@ export const CandidateElectionDetail: React.FC = () => {
   const isRegOpen = status === 'REGISTRATION_OPEN';
   const registration = currentUser ? getRegistration(currentUser.id, election.id) : undefined;
 
+  const promisesList: string[] = React.useMemo(() => {
+    if (!registration?.keyPromises) return [];
+    if (Array.isArray(registration.keyPromises)) return registration.keyPromises;
+    if (typeof registration.keyPromises === 'string') {
+      return (registration.keyPromises as string)
+        .split('\n')
+        .map((p) => p.trim())
+        .filter(Boolean);
+    }
+    return [];
+  }, [registration?.keyPromises]);
+
   // Filter open elections for the dropdown selector
   const openElections = elections.filter((e) => {
     const s = getElectionStatus(e, currentTime);
@@ -139,14 +152,19 @@ export const CandidateElectionDetail: React.FC = () => {
       setVisionStatement('');
       setKeyPromisesText('');
       setIsConfirmed(false);
+      setServerRegistered(true);
+      if (electionId) {
+        await useCandidateStore.getState().fetchCandidatesForElection(electionId);
+      }
     } else {
       setNotification({ message: res.message, type: 'error' });
     }
   };
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto' }}>
-      <div style={{ marginBottom: '1.25rem' }}>
+    <ErrorBoundary fallbackTitle="Candidate Election Detail Error">
+      <div style={{ maxWidth: 720, margin: '0 auto' }}>
+        <div style={{ marginBottom: '1.25rem' }}>
         <Link
           to="/candidate/elections"
           style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#ea580c', fontWeight: 600, fontSize: '0.9rem' }}
@@ -302,13 +320,13 @@ export const CandidateElectionDetail: React.FC = () => {
                     </div>
                   )}
 
-                  {registration.keyPromises && registration.keyPromises.length > 0 && (
+                  {promisesList.length > 0 && (
                     <div>
                       <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
                         Key Development Plans
                       </div>
                       <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-                        {registration.keyPromises.map((promise, idx) => (
+                        {promisesList.map((promise, idx) => (
                           <li key={idx} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.9rem', color: '#334155' }}>
                             <CheckCircle2 size={16} color="#ea580c" style={{ flexShrink: 0, marginTop: '2px' }} />
                             <span>{promise}</span>
@@ -541,5 +559,6 @@ export const CandidateElectionDetail: React.FC = () => {
         </div>
       </div>
     </div>
+    </ErrorBoundary>
   );
 };
