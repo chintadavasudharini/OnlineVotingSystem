@@ -62,7 +62,7 @@ export const HomePage: React.FC = () => {
             className="btn btn-lg btn-outline"
             style={{ fontWeight: 600 }}
           >
-            Sign In to Portal
+            Login
           </Link>
         </div>
 

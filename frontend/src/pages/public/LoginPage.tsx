@@ -9,7 +9,8 @@ export const LoginPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const role: LoginRole = searchParams.get('role') === 'candidate' ? 'CANDIDATE' : 'VOTER';
+  const roleParam = searchParams.get('role')?.toUpperCase();
+  const role: LoginRole = roleParam === 'CANDIDATE' ? 'CANDIDATE' : 'VOTER';
 
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
@@ -68,7 +69,7 @@ export const LoginPage: React.FC = () => {
             Login
           </h1>
           <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
-            Access your secure voting or candidate portal
+            Login portal for registered Voters and Candidates
           </p>
 
           {/* Role Selector */}
