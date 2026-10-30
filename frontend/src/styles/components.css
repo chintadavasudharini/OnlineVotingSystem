@@ -986,3 +986,72 @@
   pointer-events: none;
 }
 
+/* Home CTA Banner Action Buttons */
+.home-cta-banner .btn {
+  position: relative;
+  z-index: 1;
+  font-weight: 600;
+  padding: 0.9rem 2rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.home-cta-banner .home-cta-btn-voter,
+.home-cta-btn-voter {
+  background-color: #15803d;
+  color: #ffffff;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.home-cta-banner .home-cta-btn-voter:hover,
+.home-cta-btn-voter:hover {
+  background-color: #16a34a;
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  color: #ffffff;
+}
+
+.home-cta-banner .home-cta-btn-voter:active,
+.home-cta-btn-voter:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.home-cta-banner .home-cta-btn-voter:focus-visible,
+.home-cta-btn-voter:focus-visible {
+  outline: 2px solid #86efac;
+  outline-offset: 3px;
+}
+
+.home-cta-banner .home-cta-btn-elections,
+.home-cta-btn-elections {
+  background-color: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.2s ease;
+}
+
+.home-cta-banner .home-cta-btn-elections:hover,
+.home-cta-btn-elections:hover {
+  background-color: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.45);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  color: #ffffff;
+}
+
+.home-cta-banner .home-cta-btn-elections:active,
+.home-cta-btn-elections:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.home-cta-banner .home-cta-btn-elections:focus-visible,
+.home-cta-btn-elections:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+

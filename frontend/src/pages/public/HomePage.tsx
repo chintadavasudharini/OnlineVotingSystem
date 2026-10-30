@@ -313,19 +313,17 @@ export const HomePage: React.FC = () => {
         <p style={{ fontSize: '1.1rem', color: '#cbd5e1', maxWidth: 600, margin: '0 auto 2rem', lineHeight: 1.6 }}>
           Join your fellow citizens on a secure, certified digital voting system built for fair and transparent elections.
         </p>
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap', position: 'relative', zIndex: 1 }}>
           <Link
             to="/register?role=VOTER"
-            className="btn btn-lg btn-voter"
-            style={{ fontWeight: 600, padding: '0.9rem 2rem' }}
+            className="btn btn-lg btn-voter home-cta-btn-voter"
           >
             Register as Voter
             <ArrowRight size={18} />
           </Link>
           <Link
             to="/elections"
-            className="btn btn-lg"
-            style={{ backgroundColor: 'rgba(255, 255, 255, 0.15)', color: '#ffffff', border: '1px solid rgba(255, 255, 255, 0.25)', fontWeight: 600, padding: '0.9rem 2rem' }}
+            className="btn btn-lg home-cta-btn-elections"
           >
             View Active Elections
           </Link>
