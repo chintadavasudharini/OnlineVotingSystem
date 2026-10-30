@@ -271,7 +271,7 @@ export const LoginPage: React.FC = () => {
 
       <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
         <Link
-          to="/admin"
+          to="/admin-login"
           style={{
             display: 'inline-flex',
             alignItems: 'center',
