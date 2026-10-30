@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, Link } from 'react-router-dom';
-import { Vote, Menu, X, ShieldCheck } from 'lucide-react';
+import { Vote, Menu, X, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 export const PublicLayout: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -136,6 +136,26 @@ export const PublicLayout: React.FC = () => {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <span>Strict Role-Based Access for Voters and Candidates</span>
+            <Link
+              to="/admin"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.35rem',
+                padding: '0.25rem 0.65rem',
+                backgroundColor: '#0f172a',
+                color: '#38bdf8',
+                borderRadius: '6px',
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textDecoration: 'none',
+                boxShadow: '0 1px 2px rgba(0,0,0,0.1)'
+              }}
+              title="Super Administrator Console"
+            >
+              <ShieldAlert size={14} color="#38bdf8" />
+              <span>Admin Portal</span>
+            </Link>
             <button
               type="button"
               onClick={() => {

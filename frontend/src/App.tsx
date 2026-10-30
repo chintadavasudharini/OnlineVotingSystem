@@ -85,6 +85,7 @@ export const App: React.FC = () => {
 
         {/* Admin Public Route (Standalone Login) */}
         <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* Admin Protected Routes */}
         <Route

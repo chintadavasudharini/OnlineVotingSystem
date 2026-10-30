@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { UserCheck, Award, ArrowRight, AlertCircle, Eye, EyeOff, Check } from 'lucide-react';
+import { UserCheck, Award, ArrowRight, AlertCircle, Eye, EyeOff, Check, ShieldAlert } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 
 type LoginRole = 'VOTER' | 'CANDIDATE';
@@ -266,6 +266,28 @@ export const LoginPage: React.FC = () => {
             </Link>
           </span>
         </div>
+      </div>
+
+      <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
+        <Link
+          to="/admin"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.45rem',
+            color: '#475569',
+            fontSize: '0.85rem',
+            textDecoration: 'none',
+            fontWeight: 500,
+            padding: '0.4rem 0.85rem',
+            borderRadius: '6px',
+            backgroundColor: '#f1f5f9',
+            border: '1px solid #cbd5e1'
+          }}
+        >
+          <ShieldAlert size={15} color="#0284c7" />
+          <span>System Administrator? <strong>Go to Admin Console &rarr;</strong></span>
+        </Link>
       </div>
     </div>
   );
