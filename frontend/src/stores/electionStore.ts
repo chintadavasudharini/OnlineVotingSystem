@@ -64,6 +64,9 @@ export const useElectionStore = create<ElectionState>()(
               createdAt: e.createdAt,
               eligibleVoterIds: [],
               eligibleCandidateIds: [],
+              totalVotes: e.totalVotes ?? 0,
+              totalVoters: e.totalVoters ?? 0,
+              candidateCount: e.candidateCount ?? 0,
             }));
             set({ elections: backendElections });
           }

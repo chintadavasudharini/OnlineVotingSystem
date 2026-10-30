@@ -3,8 +3,10 @@ package com.voting.service;
 import com.voting.dto.ElectionRequest;
 import com.voting.dto.ElectionResponse;
 import com.voting.entity.Election;
+import com.voting.entity.Role;
 import com.voting.repository.CandidateRegistrationRepository;
 import com.voting.repository.ElectionRepository;
+import com.voting.repository.UserRepository;
 import com.voting.repository.VoteRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,6 +27,9 @@ public class ElectionService {
 
     @Autowired
     private VoteRepository voteRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private AuditService auditService;
@@ -151,6 +156,7 @@ public class ElectionService {
         response.setStatus(calculateElectionStatus(election));
         response.setCandidateCount(candidateRegistrationRepository.findByElectionId(election.getId()).size());
         response.setTotalVotes(voteRepository.countByElectionId(election.getId()));
+        response.setTotalVoters(userRepository.countByRole(Role.VOTER));
         return response;
     }
 }

@@ -5,15 +5,58 @@ import { useElectionStore } from '../../stores/electionStore';
 import { useCurrentTime } from '../../hooks/useCurrentTime';
 import { Badge } from '../../components/common/Badge';
 import { formatDateTime } from '../../utils/dateFormatter';
+import api from '../../services/api';
 
 export const PublicElectionsPage: React.FC = () => {
   const currentTime = useCurrentTime(5000);
   const elections = useElectionStore((state) => state.elections);
   const getElectionStatus = useElectionStore((state) => state.getElectionStatus);
+  const [candidatesMap, setCandidatesMap] = React.useState<Record<string, Array<{ candidateId: string; name: string }>>>({});
 
   React.useEffect(() => {
     useElectionStore.getState().fetchElections();
   }, []);
+
+  React.useEffect(() => {
+    if (elections.length === 0) return;
+    let isMounted = true;
+    const fetchAllCandidates = async () => {
+      try {
+        const results = await Promise.all(
+          elections.map(async (el) => {
+            try {
+              const res = await api.get(`/candidates/election/${el.id}`);
+              if (res.data && res.data.success && Array.isArray(res.data.data)) {
+                return {
+                  id: el.id,
+                  candidates: res.data.data.map((c: any) => ({
+                    candidateId: c.candidateId || c.id,
+                    name: c.name,
+                  })),
+                };
+              }
+            } catch (err) {
+              console.error(`Error fetching candidates for ${el.id}:`, err);
+            }
+            return { id: el.id, candidates: [] };
+          })
+        );
+        if (isMounted) {
+          const map: Record<string, Array<{ candidateId: string; name: string }>> = {};
+          results.forEach((item) => {
+            map[item.id] = item.candidates;
+          });
+          setCandidatesMap(map);
+        }
+      } catch (err) {
+        console.error('Error fetching candidates:', err);
+      }
+    };
+    fetchAllCandidates();
+    return () => {
+      isMounted = false;
+    };
+  }, [elections]);
 
   return (
     <div className="container" style={{ padding: '2rem 1.25rem 4rem' }}>
@@ -43,6 +86,8 @@ export const PublicElectionsPage: React.FC = () => {
         }}>
           {elections.map((election) => {
             const status = getElectionStatus(election, currentTime);
+            const isCompleted = status === 'COMPLETED';
+            const candidates = candidatesMap[election.id] || [];
 
             return (
               <div key={election.id} className="election-card">
@@ -95,6 +140,84 @@ export const PublicElectionsPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  {isCompleted ? (
+                    <div style={{
+                      padding: '0.85rem',
+                      backgroundColor: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.6rem',
+                      fontSize: '0.825rem'
+                    }}>
+                      <div style={{ fontWeight: 700, color: '#0f172a' }}>
+                        Candidates Participated
+                      </div>
+
+                      {candidates.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                          {candidates.map((c) => (
+                            <div key={c.candidateId} style={{ color: '#334155', fontWeight: 500 }}>
+                              {c.candidateId} - {c.name}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ color: '#64748b', fontStyle: 'italic' }}>
+                          No candidates participating.
+                        </div>
+                      )}
+
+                      <div style={{
+                        marginTop: '0.35rem',
+                        paddingTop: '0.55rem',
+                        borderTop: '1px solid #e2e8f0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.3rem'
+                      }}>
+                        <div style={{ color: '#0f172a' }}>
+                          <span style={{ fontWeight: 700 }}>Total Voters:</span>{' '}
+                          <span style={{ fontWeight: 600 }}>{election.totalVoters ?? 0}</span>
+                        </div>
+                        <div style={{ color: '#0f172a' }}>
+                          <span style={{ fontWeight: 700 }}>Total Votes Cast:</span>{' '}
+                          <span style={{ fontWeight: 600 }}>{election.totalVotes ?? 0}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{
+                      padding: '0.85rem',
+                      backgroundColor: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.6rem',
+                      fontSize: '0.825rem'
+                    }}>
+                      <div style={{ fontWeight: 700, color: '#0f172a' }}>
+                        Candidates Participating
+                      </div>
+
+                      {candidates.length > 0 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                          {candidates.map((c) => (
+                            <div key={c.candidateId} style={{ color: '#334155', fontWeight: 500 }}>
+                              {c.candidateId} - {c.name}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div style={{ color: '#64748b', fontStyle: 'italic' }}>
+                          No candidates participating.
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="card-footer" style={{ borderTop: '1px solid #e2e8f0', backgroundColor: '#f8fafc' }}>

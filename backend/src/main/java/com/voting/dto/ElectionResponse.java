@@ -16,6 +16,7 @@ public class ElectionResponse {
     private String status; // UPCOMING, REGISTRATION_OPEN, VOTING_OPEN, COMPLETED
     private long candidateCount;
     private long totalVotes;
+    private long totalVoters;
 
     public ElectionResponse() {}
 
@@ -113,5 +114,13 @@ public class ElectionResponse {
 
     public void setTotalVotes(long totalVotes) {
         this.totalVotes = totalVotes;
+    }
+
+    public long getTotalVoters() {
+        return totalVoters;
+    }
+
+    public void setTotalVoters(long totalVoters) {
+        this.totalVoters = totalVoters;
     }
 }

@@ -29,6 +29,9 @@ export interface Election {
   createdAt?: string;
   eligibleVoterIds?: string[];
   eligibleCandidateIds?: string[];
+  totalVotes?: number;
+  totalVoters?: number;
+  candidateCount?: number;
 }
 
 export interface CandidateRegistration {
