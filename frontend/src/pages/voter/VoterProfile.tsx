@@ -1,6 +1,7 @@
 import React from 'react';
 import { UserCheck, Mail, Calendar, Clock, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
+import { formatDob } from '../../utils/dateFormatter';
 
 export const VoterProfile: React.FC = () => {
   const currentUser = useAuthStore((state) => state.currentUser);
@@ -82,7 +83,7 @@ export const VoterProfile: React.FC = () => {
               <input
                 type="text"
                 readOnly
-                value={currentUser?.dob || ''}
+                value={formatDob(currentUser?.dob)}
                 className="form-input"
                 style={{ backgroundColor: '#f8fafc' }}
               />

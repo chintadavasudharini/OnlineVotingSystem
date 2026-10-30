@@ -3,6 +3,7 @@ import { Award, Mail, Calendar, Clock, ShieldCheck, UserCheck, Shield } from 'lu
 import { useAuthStore } from '../../stores/authStore';
 import api from '../../services/api';
 import type { User } from '../../types';
+import { formatDob } from '../../utils/dateFormatter';
 
 export const CandidateProfile: React.FC = () => {
   const currentUser = useAuthStore((state) => state.currentUser);
@@ -119,7 +120,7 @@ export const CandidateProfile: React.FC = () => {
               <input
                 type="text"
                 readOnly
-                value={user?.dob || ''}
+                value={formatDob(user?.dob)}
                 className="form-input"
                 style={{ backgroundColor: '#f8fafc' }}
               />

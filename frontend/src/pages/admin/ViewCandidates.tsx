@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { useCandidateStore } from '../../stores/candidateStore';
+import { formatDob } from '../../utils/dateFormatter';
 
 export const ViewCandidates: React.FC = () => {
   const candidates = useCandidateStore((state) => state.candidates);
@@ -69,7 +70,7 @@ export const ViewCandidates: React.FC = () => {
                     <td style={{ fontWeight: 700, color: '#ea580c' }}>{candidate.id}</td>
                     <td style={{ fontWeight: 600 }}>{candidate.name}</td>
                     <td style={{ fontWeight: 600, color: '#15803d' }}>{candidate.voterId || '—'}</td>
-                    <td>{candidate.dob || '—'}</td>
+                    <td>{formatDob(candidate.dob)}</td>
                     <td>{candidate.age}</td>
                     <td style={{ color: '#475569' }}>{candidate.email}</td>
                   </tr>

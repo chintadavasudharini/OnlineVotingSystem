@@ -25,7 +25,7 @@ export const PublicLayout: React.FC = () => {
             </div>
             <div>
               <span style={{ letterSpacing: '0.04em', fontWeight: 800, color: '#0f172a' }}>
-                ONLINE VOTING SYSTEM
+                SECURE VOTE
               </span>
               <div style={{ display: 'flex', gap: '4px', height: '3px', marginTop: '2px', borderRadius: '2px', overflow: 'hidden' }}>
                 <span style={{ flex: 1, backgroundColor: '#ea580c' }} />
@@ -132,7 +132,7 @@ export const PublicLayout: React.FC = () => {
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <ShieldCheck size={18} color="#2563eb" />
-            <span>Online Voting System &bull; Secure &bull; Transparent &bull; Digital</span>
+            <span>SECURE VOTE &bull; Secure &bull; Transparent &bull; Digital</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <span>Strict Role-Based Access for Voters and Candidates</span>

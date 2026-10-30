@@ -16,7 +16,7 @@ export const AdminLogin: React.FC = () => {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    document.title = 'Admin Login | Online Voting System';
+    document.title = 'Admin Login | SECURE VOTE';
     if (isHydrated && isAuthenticated && role === 'ADMIN') {
       navigate('/admin/dashboard', { replace: true });
     }

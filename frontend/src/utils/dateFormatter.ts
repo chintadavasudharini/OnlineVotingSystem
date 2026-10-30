@@ -19,19 +19,33 @@ export const formatDateTime = (isoString: string): string => {
   }
 };
 
-export const formatDateOnly = (isoString: string): string => {
+/**
+ * Format Date of Birth or date string into DD/MM/YYYY
+ */
+export const formatDob = (dobString?: string | null): string => {
+  if (!dobString) return '—';
   try {
-    const date = new Date(isoString);
-    if (isNaN(date.getTime())) return isoString;
-
-    return date.toLocaleDateString('en-US', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
+    const raw = dobString.split('T')[0];
+    const parts = raw.split('-');
+    if (parts.length === 3) {
+      const year = parts[0];
+      const month = parts[1].padStart(2, '0');
+      const day = parts[2].padStart(2, '0');
+      return `${day}/${month}/${year}`;
+    }
+    const date = new Date(dobString);
+    if (isNaN(date.getTime())) return dobString;
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   } catch {
-    return isoString;
+    return dobString;
   }
+};
+
+export const formatDateOnly = (isoString: string): string => {
+  return formatDob(isoString);
 };
 
 export const formatTimeOnly = (isoString: string): string => {

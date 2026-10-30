@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 import { useVoterStore } from '../../stores/voterStore';
+import { formatDob } from '../../utils/dateFormatter';
 
 export const ViewVoters: React.FC = () => {
   const voters = useVoterStore((state) => state.voters);
@@ -67,7 +68,7 @@ export const ViewVoters: React.FC = () => {
                   <tr key={voter.id}>
                     <td style={{ fontWeight: 700, color: '#15803d' }}>{voter.id}</td>
                     <td style={{ fontWeight: 600 }}>{voter.name}</td>
-                    <td>{voter.dob || '—'}</td>
+                    <td>{formatDob(voter.dob)}</td>
                     <td>{voter.age}</td>
                     <td style={{ color: '#475569' }}>{voter.email}</td>
                   </tr>

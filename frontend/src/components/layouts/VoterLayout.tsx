@@ -33,7 +33,7 @@ export const VoterLayout: React.FC = () => {
             </div>
             <div>
               <div style={{ fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.02em' }}>VOTER PORTAL</div>
-              <div style={{ fontSize: '0.75rem', opacity: 0.85 }}>Online Voting System</div>
+              <div style={{ fontSize: '0.75rem', opacity: 0.85 }}>SECURE VOTE</div>
             </div>
           </div>
           <button

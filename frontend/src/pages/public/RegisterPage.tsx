@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { UserCheck, Award, ArrowRight, CheckCircle2, Eye, EyeOff, Check, ShieldCheck, AlertCircle } from 'lucide-react';
 import { voterRegistrationSchema } from '../../schemas/authSchemas';
-import { calculateAge } from '../../utils/dateFormatter';
+import { calculateAge, formatDob } from '../../utils/dateFormatter';
 import { useVoterStore } from '../../stores/voterStore';
 import { useCandidateStore } from '../../stores/candidateStore';
 import { Modal } from '../../components/common/Modal';
@@ -345,7 +345,7 @@ export const RegisterPage: React.FC = () => {
               {/* Date of Birth */}
               <div className="form-group">
                 <label className="form-label" htmlFor="dob">
-                  Date of Birth (Minimum 18 years)
+                  Date of Birth (DD/MM/YYYY)
                 </label>
                 <input
                   id="dob"
@@ -366,7 +366,7 @@ export const RegisterPage: React.FC = () => {
                       fontWeight: 500,
                     }}
                   >
-                    Calculated Age: {calculatedAge} years &bull;{' '}
+                    Date of Birth: {formatDob(voterData.dob)} &bull; Calculated Age: {calculatedAge} years &bull;{' '}
                     {isVoterAgeEligible ? 'Eligible to vote (18+)' : 'Must be at least 18 years old'}
                   </div>
                 )}
