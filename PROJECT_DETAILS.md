@@ -335,7 +335,7 @@ erDiagram
                                               ▼
                   ┌────────────────────────────────────────────────────────┐
                   │                 CorsFilter Evaluation                  │
-                  │   - Allows http://localhost:5173                       │
+                  │   - Allows http://localhost:5174                       │
                   │   - Verifies Allowed Methods (GET, POST, OPTIONS...)   │
                   └───────────────────────────┬────────────────────────────┘
                                               │
@@ -757,12 +757,12 @@ cd backend
 > Boots at: **`http://localhost:8080`**  
 > Automatically creates tables and seeds default Super Admin: `admin` / `admin`.
 
-### 3. Launch Frontend Client (Port: 5173)
+### 3. Launch Frontend Client (Port: 5174)
 From project root:
 ```bash
 npm run dev
 ```
-> Available at: **`http://localhost:5173`**
+> Available at: **`http://localhost:5174`**
 
 ### 4. Build Full Stack for Production
 ```bash

@@ -317,7 +317,7 @@ In a separate terminal:
 ```bash
 npm run dev
 ```
-> Web client lives at: **`http://localhost:5173`**
+> Web client lives at: **`http://localhost:5174`**
 
 ---
 
