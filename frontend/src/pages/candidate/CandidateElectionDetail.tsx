@@ -29,8 +29,10 @@ export const CandidateElectionDetail: React.FC = () => {
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [serverRegistered, setServerRegistered] = useState<boolean | null>(null);
+  const electionsLoading = useElectionStore((state) => state.isLoading);
 
   React.useEffect(() => {
+    useElectionStore.getState().fetchElections();
     if (electionId) {
       useCandidateStore.getState().fetchCandidatesForElection(electionId);
       useCandidateStore.getState().checkIsRegistered(electionId).then((reg) => {
@@ -42,6 +44,30 @@ export const CandidateElectionDetail: React.FC = () => {
   const election = electionId ? getElectionById(electionId) : undefined;
 
   if (!election) {
+    if (electionsLoading) {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '4rem 2rem',
+          color: '#64748b'
+        }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            border: '3px solid #cbd5e1',
+            borderTopColor: '#ea580c',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+            marginBottom: '1rem'
+          }} />
+          <span>Loading election details...</span>
+        </div>
+      );
+    }
+
     return (
       <div className="card" style={{ padding: '3rem', textAlign: 'center' }}>
         <h2 style={{ color: '#0f172a', marginBottom: '1rem' }}>Election Not Found</h2>
