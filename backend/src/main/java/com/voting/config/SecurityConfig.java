@@ -46,6 +46,8 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // Public root & status endpoint
+                .requestMatchers("/", "/error").permitAll()
                 // Public authentication and registration endpoints
                 .requestMatchers("/api/auth/**").permitAll()
                 // Public read endpoints for elections, candidate rosters, and results
