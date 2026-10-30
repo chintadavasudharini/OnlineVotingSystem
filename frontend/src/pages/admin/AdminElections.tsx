@@ -146,6 +146,7 @@ export const AdminElections: React.FC = () => {
           <table className="data-table">
             <thead>
               <tr>
+                <th>E.ID</th>
                 <th>Election Name</th>
                 <th>Registration Period</th>
                 <th>Voting Period</th>
@@ -158,7 +159,7 @@ export const AdminElections: React.FC = () => {
             <tbody>
               {elections.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', color: '#64748b', padding: '2.5rem' }}>
+                  <td colSpan={8} style={{ textAlign: 'center', color: '#64748b', padding: '2.5rem' }}>
                     No elections created yet. Click &quot;Create Election&quot; above to configure your first election.
                   </td>
                 </tr>
@@ -170,11 +171,11 @@ export const AdminElections: React.FC = () => {
 
                   return (
                     <tr key={election.id}>
+                      <td style={{ fontWeight: 700, color: '#2563eb' }}>
+                        {election.id}
+                      </td>
                       <td>
                         <div style={{ fontWeight: 700, color: '#0f172a' }}>{election.name}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                          ID: {election.id}
-                        </div>
                       </td>
                       <td style={{ fontSize: '0.825rem', color: '#334155' }}>
                         <div>{formatDateTime(election.registrationStart)}</div>
