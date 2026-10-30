@@ -19,7 +19,16 @@ interface AuthState {
   setUser: (user: User, token: string) => void;
 }
 
-const decodeJwtPayload = (jwt: string): any | null => {
+export const normalizeRole = (r?: any): Role | null => {
+  if (!r || typeof r !== 'string') return null;
+  const upper = r.toUpperCase();
+  if (upper === 'ADMIN' || upper === 'VOTER' || upper === 'CANDIDATE') {
+    return upper as Role;
+  }
+  return null;
+};
+
+export const decodeJwtPayload = (jwt: string): any | null => {
   try {
     if (!jwt || typeof jwt !== 'string') return null;
     const parts = jwt.split('.');
@@ -35,7 +44,7 @@ const decodeJwtPayload = (jwt: string): any | null => {
   }
 };
 
-const isTokenExpired = (jwt: string): boolean => {
+export const isTokenExpired = (jwt: string): boolean => {
   try {
     if (!jwt || typeof jwt !== 'string') return true;
     const payload = decodeJwtPayload(jwt);
@@ -69,34 +78,36 @@ const getInitialAuth = () => {
         localStorage.setItem('voting_auth_token', effectiveToken);
       }
 
-      if (parsedState?.currentUser && parsedState?.currentUser?.id) {
-        const userRole = (parsedState.role || parsedState.currentUser.role) as Role;
-        return {
-          currentUser: parsedState.currentUser,
-          isAuthenticated: true,
-          role: userRole,
-          token: effectiveToken,
-          isHydrated: true,
-        };
-      }
-
+      const userRole = normalizeRole(parsedState?.role || parsedState?.currentUser?.role);
       const payload = decodeJwtPayload(effectiveToken);
-      if (payload && payload.sub) {
-        const role = (payload.role || parsedState?.role || 'VOTER') as Role;
-        const sub = payload.sub as string;
-        const name = (payload.name || sub) as string;
-        return {
-          currentUser: {
+      const jwtRole = normalizeRole(payload?.role);
+      const finalRole = userRole || jwtRole;
+
+      if (finalRole) {
+        let finalUser = parsedState?.currentUser;
+        if (!finalUser || !finalUser.id) {
+          const sub = (payload?.sub || 'user') as string;
+          const name = (payload?.name || sub) as string;
+          finalUser = {
             id: sub,
             name: name,
             email: parsedState?.currentUser?.email || '',
             age: parsedState?.currentUser?.age || 0,
             password: '',
-            role: role,
+            role: finalRole,
             voterId: parsedState?.currentUser?.voterId,
-          },
+          };
+        } else {
+          finalUser = {
+            ...finalUser,
+            role: finalRole,
+          };
+        }
+
+        return {
+          currentUser: finalUser,
           isAuthenticated: true,
-          role: role,
+          role: finalRole,
           token: effectiveToken,
           isHydrated: true,
         };
@@ -220,22 +231,16 @@ export const useAuthStore = create<AuthState>()(
           };
         }
 
-        // Preserve currentState if already restored synchronously with full user
-        if (currentState.isAuthenticated && currentState.currentUser) {
-          return {
-            ...currentState,
-            ...persistedState,
-            currentUser: persistedState.currentUser || currentState.currentUser,
-            role: persistedState.role || currentState.role,
-            isAuthenticated: true,
-            token: effectiveToken,
-            isHydrated: true,
-          };
-        }
+        const role = normalizeRole(persistedState.role || persistedState.currentUser?.role || currentState.role);
+        const user = persistedState.currentUser || currentState.currentUser;
+        const validAuth = !!(effectiveToken && !isTokenExpired(effectiveToken) && role);
 
         return {
           ...currentState,
           ...persistedState,
+          currentUser: user ? { ...user, role: role || user.role } : null,
+          role: role,
+          isAuthenticated: validAuth,
           token: effectiveToken,
           isHydrated: true,
         };

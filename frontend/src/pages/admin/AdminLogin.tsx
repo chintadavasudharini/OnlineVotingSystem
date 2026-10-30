@@ -10,17 +10,11 @@ export const AdminLogin: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const login = useAuthStore((state) => state.login);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const role = useAuthStore((state) => state.role);
-  const isHydrated = useAuthStore((state) => state.isHydrated);
   const navigate = useNavigate();
 
   React.useEffect(() => {
     document.title = 'Admin Login | SECURE VOTE';
-    if (isHydrated && isAuthenticated && role === 'ADMIN') {
-      navigate('/admin/dashboard', { replace: true });
-    }
-  }, [isHydrated, isAuthenticated, role, navigate]);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

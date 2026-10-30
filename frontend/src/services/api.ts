@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useAuthStore } from '../stores/authStore';
+import { useAuthStore, isTokenExpired } from '../stores/authStore';
 
 /**
  * Enterprise Axios REST Client for Online Voting System
@@ -56,10 +56,13 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     const isLoginEndpoint = error.config?.url?.includes('/auth/login');
-    // Only trigger store logout if an authenticated request failed with 401 Unauthorized
-    // and was NOT a normal credential validation error from /auth/login
+    // Only trigger store logout if an authenticated request failed with 401 Unauthorized,
+    // was not the login endpoint itself, and the token is genuinely missing or expired.
     if (error.response?.status === 401 && !isLoginEndpoint && error.config?.headers?.Authorization) {
-      useAuthStore.getState().logout();
+      const token = useAuthStore.getState().token;
+      if (!token || isTokenExpired(token)) {
+        useAuthStore.getState().logout();
+      }
     }
     return Promise.reject(error);
   }

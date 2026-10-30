@@ -44,9 +44,11 @@ export const App: React.FC = () => {
         {/* Public Routes */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<HomePage />} />
+          <Route path="/about" element={<HomePage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/elections" element={<PublicElectionsPage />} />
+          <Route path="/elections/:electionId" element={<PublicElectionsPage />} />
         </Route>
 
         {/* Voter Routes */}
@@ -58,7 +60,7 @@ export const App: React.FC = () => {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/voter/profile" replace />} />
+          <Route index element={<VoterProfile />} />
           <Route path="dashboard" element={<VoterProfile />} />
           <Route path="profile" element={<VoterProfile />} />
           <Route path="elections" element={<VoterElections />} />
@@ -75,7 +77,7 @@ export const App: React.FC = () => {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/candidate/profile" replace />} />
+          <Route index element={<CandidateProfile />} />
           <Route path="dashboard" element={<CandidateProfile />} />
           <Route path="profile" element={<CandidateProfile />} />
           <Route path="elections" element={<CandidateElections />} />
@@ -100,8 +102,10 @@ export const App: React.FC = () => {
             <Route path="voters" element={<ViewVoters />} />
             <Route path="candidates" element={<ViewCandidates />} />
             <Route path="elections" element={<AdminElections />} />
+            <Route path="elections/:electionId" element={<AdminElections />} />
             <Route path="audit-logs" element={<AdminAuditLogs />} />
             <Route path="results" element={<AdminResults />} />
+            <Route path="profile" element={<AdminDashboard />} />
           </Route>
         </Route>
 
