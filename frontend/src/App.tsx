@@ -83,25 +83,26 @@ export const App: React.FC = () => {
           <Route path="results" element={<CandidateResults />} />
         </Route>
 
-        {/* Admin Public Route (Standalone Login) */}
-        <Route path="/admin-login" element={<AdminLogin />} />
+        {/* Admin Routes */}
+        <Route path="/admin">
+          {/* Admin Login at /admin */}
+          <Route index element={<AdminLogin />} />
 
-        {/* Admin Protected Routes */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute allowedRole="ADMIN">
-              <AdminLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<Navigate to="/admin/dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="voters" element={<ViewVoters />} />
-          <Route path="candidates" element={<ViewCandidates />} />
-          <Route path="elections" element={<AdminElections />} />
-          <Route path="audit-logs" element={<AdminAuditLogs />} />
-          <Route path="results" element={<AdminResults />} />
+          {/* Admin Protected Console */}
+          <Route
+            element={
+              <ProtectedRoute allowedRole="ADMIN">
+                <AdminLayout />
+              </ProtectedRoute>
+            }
+          >
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="voters" element={<ViewVoters />} />
+            <Route path="candidates" element={<ViewCandidates />} />
+            <Route path="elections" element={<AdminElections />} />
+            <Route path="audit-logs" element={<AdminAuditLogs />} />
+            <Route path="results" element={<AdminResults />} />
+          </Route>
         </Route>
 
         {/* Fallback */}

@@ -137,7 +137,7 @@ export const PublicLayout: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <span>Strict Role-Based Access for Voters and Candidates</span>
             <Link
-              to="/admin-login"
+              to="/admin"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
