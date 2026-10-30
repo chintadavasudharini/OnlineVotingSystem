@@ -26,7 +26,9 @@ interface CandidateState {
   ) => Promise<{ success: boolean; message: string }>;
   getRegistration: (candidateId: string, electionId: string) => CandidateRegistration | undefined;
   isRegisteredForElection: (candidateId: string, electionId: string) => boolean;
+  checkIsRegistered: (electionId: string) => Promise<boolean>;
   getCandidatesForElection: (electionId: string) => User[];
+  fetchCandidatesForElection: (electionId: string) => Promise<User[]>;
 }
 
 export const useCandidateStore = create<CandidateState>()(
@@ -116,6 +118,69 @@ export const useCandidateStore = create<CandidateState>()(
         return get().registrations.some(
           (reg) => reg.candidateId === candidateId && reg.electionId === electionId
         );
+      },
+
+      checkIsRegistered: async (electionId: string) => {
+        try {
+          const response = await api.get('/candidates/is-registered', {
+            params: { electionId },
+          });
+          if (response.data && response.data.success) {
+            return !!response.data.data;
+          }
+        } catch {}
+        return false;
+      },
+
+      fetchCandidatesForElection: async (electionId: string) => {
+        try {
+          const response = await api.get(`/candidates/election/${electionId}`);
+          if (response.data && response.data.success && Array.isArray(response.data.data)) {
+            const rawList = response.data.data;
+            const newCandidates: User[] = rawList.map((item: any) => ({
+              id: item.candidateId,
+              name: item.name,
+              email: item.email,
+              dob: '',
+              age: item.age,
+              password: '',
+              role: 'CANDIDATE' as const,
+              status: 'ACTIVE' as const,
+              voterId: item.voterId,
+              createdAt: item.registeredAt || new Date().toISOString(),
+            }));
+
+            const newRegs: CandidateRegistration[] = rawList.map((item: any) => ({
+              id: `CR-${item.candidateId}-${electionId}`,
+              candidateId: item.candidateId,
+              electionId,
+              registeredAt: item.registeredAt || new Date().toISOString(),
+              manifestoTitle: item.manifestoTitle,
+              visionStatement: item.visionStatement,
+              keyPromises: item.keyPromises || [],
+            }));
+
+            set((state) => {
+              const candMap = new Map(state.candidates.map((c) => [c.id.toLowerCase(), c]));
+              newCandidates.forEach((c) => candMap.set(c.id.toLowerCase(), c));
+
+              const regMap = new Map(
+                state.registrations.map((r) => [`${r.candidateId.toLowerCase()}_${r.electionId.toLowerCase()}`, r])
+              );
+              newRegs.forEach((r) => regMap.set(`${r.candidateId.toLowerCase()}_${r.electionId.toLowerCase()}`, r));
+
+              return {
+                candidates: Array.from(candMap.values()),
+                registrations: Array.from(regMap.values()),
+              };
+            });
+
+            return newCandidates;
+          }
+        } catch (err) {
+          console.error('Failed to fetch candidates for election:', err);
+        }
+        return get().getCandidatesForElection(electionId);
       },
 
       registerForElection: async (

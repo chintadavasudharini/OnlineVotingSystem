@@ -28,6 +28,16 @@ export const CandidateElectionDetail: React.FC = () => {
   const [keyPromisesText, setKeyPromisesText] = useState('');
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [serverRegistered, setServerRegistered] = useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    if (electionId) {
+      useCandidateStore.getState().fetchCandidatesForElection(electionId);
+      useCandidateStore.getState().checkIsRegistered(electionId).then((reg) => {
+        setServerRegistered(reg);
+      });
+    }
+  }, [electionId]);
 
   const election = electionId ? getElectionById(electionId) : undefined;
 
@@ -44,7 +54,7 @@ export const CandidateElectionDetail: React.FC = () => {
   }
 
   const status = getElectionStatus(election, currentTime);
-  const isRegistered = currentUser ? isRegisteredForElection(currentUser.id, election.id) : false;
+  const isRegistered = (serverRegistered === true) || (currentUser ? isRegisteredForElection(currentUser.id, election.id) : false);
   const isRegOpen = status === 'REGISTRATION_OPEN';
   const registration = currentUser ? getRegistration(currentUser.id, election.id) : undefined;
 

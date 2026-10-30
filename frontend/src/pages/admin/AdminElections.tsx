@@ -79,18 +79,19 @@ export const AdminElections: React.FC = () => {
       return;
     }
 
-    const regStart = `${formData.registrationStartDate}T${formData.registrationStartTime}:00`;
-    const regEnd = `${formData.registrationEndDate}T${formData.registrationEndTime}:00`;
-    const voteStart = `${formData.votingStartDate}T${formData.votingStartTime}:00`;
-    const voteEnd = `${formData.votingEndDate}T${formData.votingEndTime}:00`;
+    const padTime = (t: string) => (t.length === 5 ? `${t}:00` : t);
+    const regStart = `${formData.registrationStartDate}T${padTime(formData.registrationStartTime)}`;
+    const regEnd = `${formData.registrationEndDate}T${padTime(formData.registrationEndTime)}`;
+    const voteStart = `${formData.votingStartDate}T${padTime(formData.votingStartTime)}`;
+    const voteEnd = `${formData.votingEndDate}T${padTime(formData.votingEndTime)}`;
 
     const res = await createElection({
       name: formData.name,
       description: formData.description,
-      registrationStart: new Date(regStart).toISOString(),
-      registrationEnd: new Date(regEnd).toISOString(),
-      votingStart: new Date(voteStart).toISOString(),
-      votingEnd: new Date(voteEnd).toISOString(),
+      registrationStart: regStart,
+      registrationEnd: regEnd,
+      votingStart: voteStart,
+      votingEnd: voteEnd,
     });
 
     if (res.success && res.election) {

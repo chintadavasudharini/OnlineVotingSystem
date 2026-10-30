@@ -59,4 +59,12 @@ public class ElectionResultResponse {
     public void setResults(List<CandidateResultDto> results) {
         this.results = results;
     }
+
+    public List<CandidateResultDto> getCandidateResults() {
+        return results;
+    }
+
+    public void setCandidateResults(List<CandidateResultDto> candidateResults) {
+        this.results = candidateResults;
+    }
 }

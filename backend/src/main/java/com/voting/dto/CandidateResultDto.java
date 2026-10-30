@@ -40,11 +40,19 @@ public class CandidateResultDto {
         this.votes = votes;
     }
 
+    public long getVotesReceived() {
+        return votes;
+    }
+
     public double getPercentage() {
         return percentage;
     }
 
     public void setPercentage(double percentage) {
         this.percentage = percentage;
+    }
+
+    public double getVotePercentage() {
+        return percentage;
     }
 }

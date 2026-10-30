@@ -88,13 +88,13 @@ public class ElectionService {
 
     @Transactional
     public ElectionResponse createElection(ElectionRequest request, String adminId) {
-        if (request.getRegistrationEnd().isBefore(request.getRegistrationStart())) {
+        if (!request.getRegistrationEnd().isAfter(request.getRegistrationStart())) {
             throw new IllegalArgumentException("Registration end time must be after registration start time.");
         }
-        if (request.getVotingStart().isBefore(request.getRegistrationEnd())) {
+        if (!request.getVotingStart().isAfter(request.getRegistrationEnd())) {
             throw new IllegalArgumentException("Voting start time must be after registration end time.");
         }
-        if (request.getVotingEnd().isBefore(request.getVotingStart())) {
+        if (!request.getVotingEnd().isAfter(request.getVotingStart())) {
             throw new IllegalArgumentException("Voting end time must be after voting start time.");
         }
 

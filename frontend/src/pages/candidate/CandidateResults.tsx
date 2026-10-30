@@ -17,11 +17,28 @@ export const CandidateResults: React.FC = () => {
     return currentTime.getTime() > new Date(e.votingEnd).getTime();
   });
 
-  const [selectedElectionId, setSelectedElectionId] = useState<string>(
-    completedElections[0]?.id || ''
-  );
+  const [selectedElectionId, setSelectedElectionId] = useState<string>('');
+  const [backendResults, setBackendResults] = useState<{ results: any[]; totalVotes: number } | null>(null);
 
-  const selectedElection = elections.find((e) => e.id === selectedElectionId);
+  const currentElectionId = selectedElectionId || completedElections[0]?.id || '';
+  const selectedElection = elections.find((e) => e.id === currentElectionId);
+
+  React.useEffect(() => {
+    useElectionStore.getState().fetchElections();
+    useCandidateStore.getState().fetchCandidates();
+  }, []);
+
+  React.useEffect(() => {
+    if (currentElectionId && selectedElection?.resultsPublished) {
+      useVoteStore.getState().fetchResults(currentElectionId).then((res) => {
+        if (res && res.results.length > 0) {
+          setBackendResults(res);
+        } else {
+          setBackendResults(null);
+        }
+      });
+    }
+  }, [currentElectionId, selectedElection?.resultsPublished]);
 
   return (
     <div style={{ maxWidth: 840, margin: '0 auto' }}>
@@ -51,7 +68,7 @@ export const CandidateResults: React.FC = () => {
             marginBottom: '1.5rem'
           }}>
             {completedElections.map((election) => {
-              const isSelected = election.id === selectedElectionId;
+              const isSelected = election.id === currentElectionId;
               return (
                 <button
                   key={election.id}
@@ -120,10 +137,9 @@ export const CandidateResults: React.FC = () => {
                 ) : (
                   <div>
                     {(() => {
-                      const { results, totalVotes } = getElectionResults(
-                        selectedElection.id,
-                        candidates
-                      );
+                      const localRes = getElectionResults(selectedElection.id, candidates);
+                      const results = (backendResults && backendResults.results.length > 0) ? backendResults.results : localRes.results;
+                      const totalVotes = backendResults ? backendResults.totalVotes : localRes.totalVotes;
 
                       if (results.length === 0) {
                         return (

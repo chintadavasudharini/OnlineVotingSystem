@@ -27,6 +27,16 @@ export const VoterVotePage: React.FC = () => {
   const [confirmModalOpen, setConfirmModalOpen] = useState(false);
   const [voteSubmittedSuccess, setVoteSubmittedSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [serverVoted, setServerVoted] = useState<boolean | null>(null);
+
+  React.useEffect(() => {
+    if (electionId) {
+      useCandidateStore.getState().fetchCandidatesForElection(electionId);
+      useVoteStore.getState().checkHasVoted(electionId).then((voted) => {
+        setServerVoted(voted);
+      });
+    }
+  }, [electionId]);
 
   const election = electionId ? getElectionById(electionId) : undefined;
 
@@ -44,7 +54,7 @@ export const VoterVotePage: React.FC = () => {
 
   const status = getElectionStatus(election, currentTime);
   const candidates = electionId ? getCandidatesForElection(electionId) : [];
-  const alreadyVoted = currentUser ? hasVoted(currentUser.id, election.id) : false;
+  const alreadyVoted = (serverVoted === true) || (currentUser ? hasVoted(currentUser.id, election.id) : false);
   const isEligible = currentUser ? isVoterEligible(election, currentUser.id, currentUser) : true;
 
   const selectedCandidate = candidates.find((c) => c.id === selectedCandidateId);

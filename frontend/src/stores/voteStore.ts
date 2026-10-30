@@ -87,11 +87,12 @@ export const useVoteStore = create<VoteState>()(
           const response = await api.get(`/votes/results/${electionId}`);
           if (response.data && response.data.success) {
             const data = response.data.data;
-            const results: CandidateResult[] = (data.candidateResults || []).map((r: any) => ({
+            const rawList = data.results || data.candidateResults || [];
+            const results: CandidateResult[] = rawList.map((r: any) => ({
               candidateId: r.candidateId,
               candidateName: r.candidateName,
-              votes: r.votesReceived || 0,
-              percentage: Math.round(r.votePercentage || 0),
+              votes: Number(r.votes ?? r.votesReceived ?? 0),
+              percentage: Number(r.percentage ?? r.votePercentage ?? 0),
             }));
 
             return {

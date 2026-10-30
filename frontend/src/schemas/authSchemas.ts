@@ -15,7 +15,7 @@ export const voterRegistrationSchema = z
         return !isNaN(d.getTime()) && d <= new Date();
       }, 'Please enter a valid Date of Birth')
       .refine((val) => calculateAge(val) >= 18, 'Eligible age for voter is 18 years or above'),
-    password: z.string().min(1, 'Password is required'),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
     confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
   .refine((data) => data.password === data.confirmPassword, {

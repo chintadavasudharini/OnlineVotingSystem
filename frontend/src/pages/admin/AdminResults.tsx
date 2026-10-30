@@ -20,16 +20,33 @@ export const AdminResults: React.FC = () => {
     return currentTime.getTime() > new Date(e.votingEnd).getTime();
   });
 
-  const [selectedElectionId, setSelectedElectionId] = useState<string>(
-    completedElections[0]?.id || ''
-  );
+  const [selectedElectionId, setSelectedElectionId] = useState<string>('');
 
   // Calculate results locally displayed upon button press
   const [calculatedMap, setCalculatedMap] = useState<Record<string, boolean>>({});
   const [publishModalElectionId, setPublishModalElectionId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [backendResults, setBackendResults] = useState<{ results: any[]; totalVotes: number } | null>(null);
 
-  const selectedElection = elections.find((e) => e.id === selectedElectionId);
+  const currentElectionId = selectedElectionId || completedElections[0]?.id || '';
+  const selectedElection = elections.find((e) => e.id === currentElectionId);
+
+  React.useEffect(() => {
+    useElectionStore.getState().fetchElections();
+    useCandidateStore.getState().fetchCandidates();
+  }, []);
+
+  React.useEffect(() => {
+    if (currentElectionId) {
+      useVoteStore.getState().fetchResults(currentElectionId).then((res) => {
+        if (res && res.results.length > 0) {
+          setBackendResults(res);
+        } else {
+          setBackendResults(null);
+        }
+      });
+    }
+  }, [currentElectionId]);
 
   const handleCalculateResults = (electionId: string) => {
     setCalculatedMap((prev) => ({ ...prev, [electionId]: true }));
@@ -89,7 +106,7 @@ export const AdminResults: React.FC = () => {
             paddingBottom: '0.5rem'
           }}>
             {completedElections.map((election) => {
-              const isSelected = election.id === selectedElectionId;
+              const isSelected = election.id === currentElectionId;
               return (
                 <button
                   key={election.id}
@@ -144,7 +161,9 @@ export const AdminResults: React.FC = () => {
                 {(() => {
                   const votes = getVotesForElection(selectedElection.id);
                   const isCalculated = calculatedMap[selectedElection.id] || selectedElection.resultsPublished;
-                  const { results } = getElectionResults(selectedElection.id, candidates);
+                  const localRes = getElectionResults(selectedElection.id, candidates);
+                  const results = (backendResults && backendResults.results.length > 0) ? backendResults.results : localRes.results;
+                  const totalVotesCount = backendResults ? backendResults.totalVotes : votes.length;
 
                   return (
                     <div>
@@ -164,7 +183,7 @@ export const AdminResults: React.FC = () => {
                             Total Ballots Cast
                           </div>
                           <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a' }}>
-                            {votes.length.toLocaleString()}
+                            {totalVotesCount.toLocaleString()}
                           </div>
                         </div>
 

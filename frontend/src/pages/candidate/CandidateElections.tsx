@@ -15,6 +15,10 @@ export const CandidateElections: React.FC = () => {
   const currentUser = useAuthStore((state) => state.currentUser);
   const isRegisteredForElection = useCandidateStore((state) => state.isRegisteredForElection);
 
+  React.useEffect(() => {
+    useElectionStore.getState().fetchElections();
+  }, []);
+
   return (
     <div>
       <div style={{ marginBottom: '1.75rem' }}>
