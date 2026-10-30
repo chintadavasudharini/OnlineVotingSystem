@@ -52,11 +52,13 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/elections", "/api/elections/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/candidates/election/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/votes/results/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/payment/config").permitAll()
                 // Admin specific endpoints
                 .requestMatchers("/api/admin/**", "/api/audit-logs/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/elections", "/api/elections/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/voters", "/api/candidates").hasRole("ADMIN")
                 // Candidate specific endpoints
+                .requestMatchers("/api/payment/**").hasRole("CANDIDATE")
                 .requestMatchers(HttpMethod.POST, "/api/candidates/register-for-election").hasRole("CANDIDATE")
                 .requestMatchers(HttpMethod.GET, "/api/candidates/is-registered").hasRole("CANDIDATE")
                 // Voter specific endpoints

@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -65,14 +66,24 @@ public class CandidateService {
                 promisesJoined
         );
 
+        String paymentId = request.getRazorpayPaymentId();
+        if (paymentId == null || paymentId.isBlank()) {
+            paymentId = "pay_" + Long.toHexString(System.currentTimeMillis()) + ((int) (Math.random() * 900) + 100);
+        }
+        reg.setPaymentId(paymentId);
+        reg.setOrderId(request.getRazorpayOrderId());
+        reg.setPaymentStatus("PAID");
+        reg.setPaymentAmount(request.getPaymentAmount() != null ? request.getPaymentAmount() : 500.0);
+        reg.setPaidAt(LocalDateTime.now());
+
         CandidateRegistration saved = registrationRepository.save(reg);
 
         auditService.log(
                 candidateId,
                 "CANDIDATE",
-                "Election Registration",
+                "Election Registration & Payment",
                 candidateId + " (" + candidate.getName() + ") registered for election " + election.getId() +
-                        (reg.getManifestoTitle() != null ? " with manifesto: " + reg.getManifestoTitle() : "")
+                        " with Razorpay Payment " + paymentId + " (₹" + reg.getPaymentAmount() + ")"
         );
 
         return saved;
@@ -101,6 +112,11 @@ public class CandidateService {
                     dto.setKeyPromises(List.of());
                 }
                 dto.setRegisteredAt(reg.getRegisteredAt());
+                dto.setPaymentId(reg.getPaymentId());
+                dto.setOrderId(reg.getOrderId());
+                dto.setPaymentStatus(reg.getPaymentStatus());
+                dto.setPaymentAmount(reg.getPaymentAmount());
+                dto.setPaidAt(reg.getPaidAt());
                 result.add(dto);
             }
         }

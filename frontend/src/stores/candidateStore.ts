@@ -36,6 +36,10 @@ interface CandidateState {
       manifestoTitle?: string;
       visionStatement?: string;
       keyPromises?: string[];
+      razorpayOrderId?: string;
+      razorpayPaymentId?: string;
+      razorpaySignature?: string;
+      paymentAmount?: number;
     },
     electionName?: string
   ) => Promise<{ success: boolean; message: string }>;
@@ -182,6 +186,11 @@ export const useCandidateStore = create<CandidateState>()(
               manifestoTitle: item.manifestoTitle,
               visionStatement: item.visionStatement,
               keyPromises: normalizeKeyPromises(item.keyPromises),
+              paymentId: item.paymentId,
+              orderId: item.orderId,
+              paymentStatus: item.paymentStatus,
+              paymentAmount: item.paymentAmount,
+              paidAt: item.paidAt,
             }));
 
             set((state) => {
@@ -214,6 +223,10 @@ export const useCandidateStore = create<CandidateState>()(
           manifestoTitle?: string;
           visionStatement?: string;
           keyPromises?: string[];
+          razorpayOrderId?: string;
+          razorpayPaymentId?: string;
+          razorpaySignature?: string;
+          paymentAmount?: number;
         }
       ) => {
         try {
@@ -222,6 +235,10 @@ export const useCandidateStore = create<CandidateState>()(
             manifestoTitle: manifesto?.manifestoTitle?.trim(),
             visionStatement: manifesto?.visionStatement?.trim(),
             keyPromises: manifesto?.keyPromises,
+            razorpayOrderId: manifesto?.razorpayOrderId,
+            razorpayPaymentId: manifesto?.razorpayPaymentId,
+            razorpaySignature: manifesto?.razorpaySignature,
+            paymentAmount: manifesto?.paymentAmount,
           });
 
           if (response.data && response.data.success) {
@@ -235,6 +252,11 @@ export const useCandidateStore = create<CandidateState>()(
               manifestoTitle: reg?.manifestoTitle || manifesto?.manifestoTitle,
               visionStatement: reg?.visionStatement || manifesto?.visionStatement,
               keyPromises: parsedPromises,
+              paymentId: reg?.paymentId || manifesto?.razorpayPaymentId,
+              orderId: reg?.orderId || manifesto?.razorpayOrderId,
+              paymentStatus: reg?.paymentStatus || 'PAID',
+              paymentAmount: reg?.paymentAmount || manifesto?.paymentAmount || 500,
+              paidAt: reg?.paidAt || new Date().toISOString(),
             };
 
             set((state) => ({

@@ -42,6 +42,11 @@ export interface CandidateRegistration {
   manifestoTitle?: string;
   visionStatement?: string;
   keyPromises?: string[];
+  paymentId?: string;
+  orderId?: string;
+  paymentStatus?: string;
+  paymentAmount?: number;
+  paidAt?: string;
 }
 
 export interface Vote {
