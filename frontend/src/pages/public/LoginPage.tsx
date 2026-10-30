@@ -19,9 +19,10 @@ export const LoginPage: React.FC = () => {
   const login = useAuthStore((state) => state.login);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const currentRole = useAuthStore((state) => state.role);
+  const isHydrated = useAuthStore((state) => state.isHydrated);
 
   React.useEffect(() => {
-    if (isAuthenticated) {
+    if (isHydrated && isAuthenticated && currentRole) {
       if (currentRole === 'ADMIN') {
         navigate('/admin/dashboard', { replace: true });
       } else if (currentRole === 'CANDIDATE') {
@@ -30,7 +31,7 @@ export const LoginPage: React.FC = () => {
         navigate('/voter/profile', { replace: true });
       }
     }
-  }, [isAuthenticated, currentRole, navigate]);
+  }, [isHydrated, isAuthenticated, currentRole, navigate]);
 
   const handleRoleChange = (newRole: LoginRole) => {
     setSearchParams({ role: newRole.toLowerCase() });
