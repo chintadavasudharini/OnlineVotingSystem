@@ -31,7 +31,7 @@ export const CandidateProfile: React.FC = () => {
               fontWeight: 700,
               fontSize: '1.1rem'
             }}>
-              {currentUser?.name.charAt(0).toUpperCase()}
+              {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'C'}
             </div>
             <div>
               <div style={{ fontWeight: 700, fontSize: '1.1rem', color: '#0f172a' }}>

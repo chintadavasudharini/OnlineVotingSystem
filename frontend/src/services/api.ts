@@ -1,8 +1,9 @@
 import axios from 'axios';
+import { useAuthStore } from '../stores/authStore';
 
 /**
  * Enterprise Axios REST Client for Online Voting System
- * Features automatic Bearer JWT injection and standardized response error handling.
+ * Features automatic Bearer JWT injection, fallback token recovery, and synchronized error handling.
  */
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
 
@@ -14,10 +15,34 @@ export const api = axios.create({
   timeout: 10000,
 });
 
-// Automatic JWT Authorization header injection
+// Automatic JWT Authorization header injection with fallback resolution
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('voting_auth_token');
+    let token = localStorage.getItem('voting_auth_token');
+
+    // Fallback 1: Extract from voting_auth_session if voting_auth_token was absent
+    if (!token) {
+      try {
+        const raw = localStorage.getItem('voting_auth_session');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          const state = parsed.state || parsed;
+          token = state.token || null;
+          if (token) {
+            localStorage.setItem('voting_auth_token', token);
+          }
+        }
+      } catch {}
+    }
+
+    // Fallback 2: Extract from Zustand store state directly
+    if (!token) {
+      token = useAuthStore.getState().token;
+      if (token) {
+        localStorage.setItem('voting_auth_token', token);
+      }
+    }
+
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -30,10 +55,11 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && error.config?.headers?.Authorization) {
-      // Clear token only if authenticated request failed with 401
-      localStorage.removeItem('voting_auth_token');
-      localStorage.removeItem('voting_auth_session');
+    const isLoginEndpoint = error.config?.url?.includes('/auth/login');
+    // Only trigger store logout if an authenticated request failed with 401 Unauthorized
+    // and was NOT a normal credential validation error from /auth/login
+    if (error.response?.status === 401 && !isLoginEndpoint && error.config?.headers?.Authorization) {
+      useAuthStore.getState().logout();
     }
     return Promise.reject(error);
   }

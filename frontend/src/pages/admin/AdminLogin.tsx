@@ -10,7 +10,15 @@ export const AdminLogin: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const login = useAuthStore((state) => state.login);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const role = useAuthStore((state) => state.role);
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    if (isAuthenticated && role === 'ADMIN') {
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, role, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -59,7 +59,7 @@ export const App: React.FC = () => {
           }
         >
           <Route index element={<Navigate to="/voter/profile" replace />} />
-          <Route path="dashboard" element={<Navigate to="/voter/profile" replace />} />
+          <Route path="dashboard" element={<VoterProfile />} />
           <Route path="profile" element={<VoterProfile />} />
           <Route path="elections" element={<VoterElections />} />
           <Route path="elections/:electionId" element={<VoterVotePage />} />
@@ -76,7 +76,7 @@ export const App: React.FC = () => {
           }
         >
           <Route index element={<Navigate to="/candidate/profile" replace />} />
-          <Route path="dashboard" element={<Navigate to="/candidate/profile" replace />} />
+          <Route path="dashboard" element={<CandidateProfile />} />
           <Route path="profile" element={<CandidateProfile />} />
           <Route path="elections" element={<CandidateElections />} />
           <Route path="elections/:electionId" element={<CandidateElectionDetail />} />
@@ -95,6 +95,7 @@ export const App: React.FC = () => {
             </ProtectedRoute>
           }
         >
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="voters" element={<ViewVoters />} />
           <Route path="candidates" element={<ViewCandidates />} />

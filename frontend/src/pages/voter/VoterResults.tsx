@@ -25,7 +25,6 @@ export const VoterResults: React.FC = () => {
 
   React.useEffect(() => {
     useElectionStore.getState().fetchElections();
-    useCandidateStore.getState().fetchCandidates();
   }, []);
 
   React.useEffect(() => {

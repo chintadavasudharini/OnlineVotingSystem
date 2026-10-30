@@ -9,8 +9,36 @@ interface ProtectedRouteProps {
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRole }) => {
-  const { isAuthenticated, role } = useAuthStore();
+  const { isAuthenticated, role, isHydrated } = useAuthStore();
   const location = useLocation();
+
+  // Guard against premature redirects while Zustand authentication is hydrating
+  if (!isHydrated) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f8fafc',
+        color: '#64748b',
+        fontSize: '0.95rem',
+        fontWeight: 500,
+      }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: '28px',
+            height: '28px',
+            border: '3px solid #cbd5e1',
+            borderTopColor: '#2563eb',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+          <span>Verifying authentication...</span>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     if (allowedRole === 'ADMIN') {

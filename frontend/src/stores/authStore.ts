@@ -8,6 +8,8 @@ interface AuthState {
   isAuthenticated: boolean;
   role: Role | null;
   token: string | null;
+  isHydrated: boolean;
+  setHydrated: (hydrated: boolean) => void;
   login: (
     identifier: string,
     password: string,
@@ -17,35 +19,81 @@ interface AuthState {
   setUser: (user: User, token: string) => void;
 }
 
+const isTokenExpired = (jwt: string): boolean => {
+  try {
+    const parts = jwt.split('.');
+    if (parts.length !== 3) return true;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (typeof payload.exp === 'number') {
+      return Date.now() >= payload.exp * 1000;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+};
+
 const getInitialAuth = () => {
   try {
     const raw = localStorage.getItem('voting_auth_session');
-    const token = localStorage.getItem('voting_auth_token');
+    let token = localStorage.getItem('voting_auth_token');
+
     if (raw) {
       const parsed = JSON.parse(raw);
-      if (parsed.state && parsed.state.currentUser && (parsed.state.token || token)) {
-        return {
-          currentUser: parsed.state.currentUser,
-          isAuthenticated: true,
-          role: parsed.state.role || parsed.state.currentUser.role,
-          token: parsed.state.token || token,
-        };
+      const state = parsed.state || parsed;
+      const effectiveToken = state.token || token;
+
+      if (effectiveToken && !isTokenExpired(effectiveToken)) {
+        if (!token) {
+          localStorage.setItem('voting_auth_token', effectiveToken);
+        }
+        if (state.currentUser) {
+          return {
+            currentUser: state.currentUser,
+            isAuthenticated: true,
+            role: (state.role || state.currentUser.role) as Role,
+            token: effectiveToken,
+            isHydrated: true,
+          };
+        }
       }
     }
-    if (token) {
-      return {
-        currentUser: null,
-        isAuthenticated: false,
-        role: null,
-        token,
-      };
+
+    if (token && !isTokenExpired(token)) {
+      try {
+        const parts = token.split('.');
+        if (parts.length === 3) {
+          const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+          const role = payload.role as Role;
+          const sub = payload.sub as string;
+          const name = payload.name as string;
+          if (role && sub) {
+            return {
+              currentUser: {
+                id: sub,
+                name: name || sub,
+                email: '',
+                age: 0,
+                password: '',
+                role: role,
+              },
+              isAuthenticated: true,
+              role: role,
+              token: token,
+              isHydrated: true,
+            };
+          }
+        }
+      } catch {}
     }
   } catch {}
+
   return {
     currentUser: null,
     isAuthenticated: false,
     role: null,
     token: null,
+    isHydrated: true,
   };
 };
 
@@ -58,6 +106,11 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: initialAuth.isAuthenticated,
       role: initialAuth.role,
       token: initialAuth.token,
+      isHydrated: initialAuth.isHydrated,
+
+      setHydrated: (hydrated: boolean) => {
+        set({ isHydrated: hydrated });
+      },
 
       setUser: (user: User, token: string) => {
         localStorage.setItem('voting_auth_token', token);
@@ -66,6 +119,7 @@ export const useAuthStore = create<AuthState>()(
           isAuthenticated: true,
           role: user.role,
           token,
+          isHydrated: true,
         });
       },
 
@@ -100,6 +154,7 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: true,
               role: user.role,
               token,
+              isHydrated: true,
             });
 
             return { success: true };
@@ -120,17 +175,42 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         localStorage.removeItem('voting_auth_token');
+        localStorage.removeItem('voting_auth_session');
         set({
           currentUser: null,
           isAuthenticated: false,
           role: null,
           token: null,
+          isHydrated: true,
         });
       },
     }),
     {
       name: 'voting_auth_session',
+      merge: (persistedState: any, currentState: any) => {
+        if (persistedState && persistedState.token && isTokenExpired(persistedState.token)) {
+          localStorage.removeItem('voting_auth_token');
+          localStorage.removeItem('voting_auth_session');
+          return {
+            ...currentState,
+            currentUser: null,
+            isAuthenticated: false,
+            role: null,
+            token: null,
+            isHydrated: true,
+          };
+        }
+        return {
+          ...currentState,
+          ...persistedState,
+          isHydrated: true,
+        };
+      },
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          state.setHydrated(true);
+        }
+      },
     }
   )
 );
-
