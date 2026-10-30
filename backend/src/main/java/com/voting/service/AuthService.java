@@ -65,8 +65,8 @@ public class AuthService {
 
     @Transactional
     public AuthResponse registerVoter(VoterRegisterRequest request) {
-        if (userRepository.existsByEmailIgnoreCase(request.getEmail().trim())) {
-            throw new IllegalArgumentException("A user with this email address already exists.");
+        if (userRepository.existsByEmailIgnoreCaseAndRole(request.getEmail().trim(), Role.VOTER)) {
+            throw new IllegalArgumentException("A registered voter with this email address already exists.");
         }
         if (request.getAge() < 18) {
             throw new IllegalArgumentException("Voter must be at least 18 years old to register.");
@@ -135,7 +135,7 @@ public class AuthService {
         User candidate = new User(
                 candidateId,
                 voter.getName(),
-                "cand." + candidateId.toLowerCase() + "." + voter.getEmail(),
+                voter.getEmail(),
                 voter.getDob(),
                 voter.getAge(),
                 encodedPassword,
@@ -214,7 +214,18 @@ public class AuthService {
         // Voter or Candidate
         Optional<User> userOpt = userRepository.findByIdIgnoreCase(identifier);
         if (userOpt.isEmpty()) {
-            userOpt = userRepository.findByEmailIgnoreCase(identifier);
+            if (roleStr != null) {
+                try {
+                    Role targetRole = Role.valueOf(roleStr);
+                    userOpt = userRepository.findByEmailIgnoreCaseAndRole(identifier, targetRole);
+                } catch (IllegalArgumentException ignored) {}
+            }
+            if (userOpt.isEmpty()) {
+                List<User> users = userRepository.findAllByEmailIgnoreCase(identifier);
+                if (!users.isEmpty()) {
+                    userOpt = Optional.of(users.get(0));
+                }
+            }
         }
 
         User user = userOpt.orElseThrow(() -> new IllegalArgumentException("Invalid user ID or password."));
