@@ -18,21 +18,6 @@ export const LoginPage: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const login = useAuthStore((state) => state.login);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const currentRole = useAuthStore((state) => state.role);
-  const isHydrated = useAuthStore((state) => state.isHydrated);
-
-  React.useEffect(() => {
-    if (isHydrated && isAuthenticated && currentRole) {
-      if (currentRole === 'ADMIN') {
-        navigate('/admin/dashboard', { replace: true });
-      } else if (currentRole === 'CANDIDATE') {
-        navigate('/candidate/profile', { replace: true });
-      } else if (currentRole === 'VOTER') {
-        navigate('/voter/profile', { replace: true });
-      }
-    }
-  }, [isHydrated, isAuthenticated, currentRole, navigate]);
 
   const handleRoleChange = (newRole: LoginRole) => {
     setSearchParams({ role: newRole.toLowerCase() });
