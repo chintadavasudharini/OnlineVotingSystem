@@ -1,6 +1,7 @@
 package com.voting.exception;
 
 import com.voting.dto.ApiResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -14,6 +15,19 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
+        String msg = "Data conflict: A record with this information already exists.";
+        if (ex.getMostSpecificCause() != null && ex.getMostSpecificCause().getMessage() != null) {
+            String cause = ex.getMostSpecificCause().getMessage();
+            if (cause.contains("unique") || cause.contains("duplicate key") || cause.contains("already exists")) {
+                msg = "Duplicate entry: you have already voted or this record already exists.";
+            }
+        }
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(msg));
+    }
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
     public ResponseEntity<ApiResponse<Object>> handleNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
