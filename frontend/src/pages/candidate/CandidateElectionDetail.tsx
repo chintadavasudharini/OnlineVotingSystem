@@ -33,7 +33,7 @@ export const CandidateElectionDetail: React.FC = () => {
   const [serverRegistered, setServerRegistered] = useState<boolean | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [paymentStep, setPaymentStep] = useState<'idle' | 'creating_order' | 'checkout' | 'verifying' | 'confirmed'>('idle');
-  const [nominationFee, setNominationFee] = useState<number>(500);
+  const [nominationFee, setNominationFee] = useState<number>(100);
   const [paymentDetails, setPaymentDetails] = useState<{ paymentId?: string; orderId?: string; amount?: number } | null>(null);
   const electionsLoading = useElectionStore((state) => state.isLoading);
 

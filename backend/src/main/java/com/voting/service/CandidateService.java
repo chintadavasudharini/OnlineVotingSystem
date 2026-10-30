@@ -73,7 +73,7 @@ public class CandidateService {
         reg.setPaymentId(paymentId);
         reg.setOrderId(request.getRazorpayOrderId());
         reg.setPaymentStatus("PAID");
-        reg.setPaymentAmount(request.getPaymentAmount() != null ? request.getPaymentAmount() : 500.0);
+        reg.setPaymentAmount(request.getPaymentAmount() != null ? request.getPaymentAmount() : 100.0);
         reg.setPaidAt(LocalDateTime.now());
 
         CandidateRegistration saved = registrationRepository.save(reg);

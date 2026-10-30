@@ -53,7 +53,7 @@ public class PaymentController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPaymentConfig() {
         return ResponseEntity.ok(ApiResponse.ok("Payment configuration", Map.of(
                 "keyId", paymentService.getKeyId(),
-                "nominationFee", 500.0,
+                "nominationFee", paymentService.getNominationFeeInRupees(),
                 "currency", "INR"
         )));
     }

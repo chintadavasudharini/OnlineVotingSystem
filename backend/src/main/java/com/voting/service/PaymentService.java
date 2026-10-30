@@ -24,17 +24,17 @@ import java.util.Map;
 @Service
 public class PaymentService {
 
-    @Value("${razorpay.key.id:rzp_test_5174OnlineVoteKey}")
+    @Value("${razorpay.key.id:rzp_test_TuHZ9A0hAgLC6b}")
     private String keyId;
 
-    @Value("${razorpay.key.secret:5174OnlineVoteSecret}")
+    @Value("${razorpay.key.secret:ayeQXttS95jNOJgxfD75ni2S}")
     private String keySecret;
 
     @Value("${razorpay.currency:INR}")
     private String currency;
 
-    @Value("${razorpay.nomination.fee:50000}")
-    private long defaultNominationFee; // 50000 paise = ₹500.00
+    @Value("${razorpay.nomination.fee:10000}")
+    private long defaultNominationFee; // 10000 paise = ₹100.00
 
     @Autowired
     private UserRepository userRepository;
@@ -165,5 +165,9 @@ public class PaymentService {
 
     public String getKeyId() {
         return keyId;
+    }
+
+    public double getNominationFeeInRupees() {
+        return defaultNominationFee / 100.0;
     }
 }
