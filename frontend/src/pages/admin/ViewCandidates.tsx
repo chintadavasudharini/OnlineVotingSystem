@@ -14,7 +14,8 @@ export const ViewCandidates: React.FC = () => {
     (c) =>
       c.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      c.email.toLowerCase().includes(searchQuery.toLowerCase())
+      c.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (c.voterId && c.voterId.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -47,17 +48,18 @@ export const ViewCandidates: React.FC = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th>C.ID</th>
                 <th>Name</th>
-                <th>Email</th>
+                <th>V.ID</th>
                 <th>Date of Birth</th>
                 <th>Age</th>
+                <th>Email</th>
               </tr>
             </thead>
             <tbody>
               {filteredCandidates.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>
+                  <td colSpan={6} style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>
                     No candidates found matching your query.
                   </td>
                 </tr>
@@ -66,9 +68,10 @@ export const ViewCandidates: React.FC = () => {
                   <tr key={candidate.id}>
                     <td style={{ fontWeight: 700, color: '#ea580c' }}>{candidate.id}</td>
                     <td style={{ fontWeight: 600 }}>{candidate.name}</td>
-                    <td style={{ color: '#475569' }}>{candidate.email}</td>
+                    <td style={{ fontWeight: 600, color: '#15803d' }}>{candidate.voterId || '—'}</td>
                     <td>{candidate.dob || '—'}</td>
                     <td>{candidate.age}</td>
+                    <td style={{ color: '#475569' }}>{candidate.email}</td>
                   </tr>
                 ))
               )}

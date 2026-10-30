@@ -48,11 +48,11 @@ export const ViewVoters: React.FC = () => {
           <table className="data-table">
             <thead>
               <tr>
-                <th>ID</th>
+                <th>V.ID</th>
                 <th>Name</th>
-                <th>Email</th>
                 <th>Date of Birth</th>
                 <th>Age</th>
+                <th>Email</th>
               </tr>
             </thead>
             <tbody>
@@ -65,11 +65,11 @@ export const ViewVoters: React.FC = () => {
               ) : (
                 filteredVoters.map((voter) => (
                   <tr key={voter.id}>
-                    <td style={{ fontWeight: 700, color: '#0f172a' }}>{voter.id}</td>
+                    <td style={{ fontWeight: 700, color: '#15803d' }}>{voter.id}</td>
                     <td style={{ fontWeight: 600 }}>{voter.name}</td>
-                    <td style={{ color: '#475569' }}>{voter.email}</td>
                     <td>{voter.dob || '—'}</td>
                     <td>{voter.age}</td>
+                    <td style={{ color: '#475569' }}>{voter.email}</td>
                   </tr>
                 ))
               )}
