@@ -43,21 +43,5 @@ public class DataInitializer implements CommandLineRunner {
             userRepository.save(admin);
             System.out.println(">>> Super Admin account initialized: [admin / admin]");
         }
-
-        // Initialize sample election if empty
-        if (electionRepository.count() == 0) {
-            LocalDateTime now = LocalDateTime.now();
-            Election sampleElection = new Election(
-                    "E1",
-                    "Presidential General Election 2026",
-                    "Official nationwide democratic election for executive leadership and municipal representatives.",
-                    now.minusDays(2),
-                    now.plusDays(3),
-                    now.plusDays(4),
-                    now.plusDays(10)
-            );
-            electionRepository.save(sampleElection);
-            System.out.println(">>> Sample election initialized: [E1 - Presidential General Election 2026]");
-        }
     }
 }
