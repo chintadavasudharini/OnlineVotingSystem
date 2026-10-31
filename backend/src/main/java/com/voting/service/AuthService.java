@@ -178,15 +178,8 @@ public class AuthService {
         String identifier = cleanIdentifier.isEmpty() ? rawIdentifier : cleanIdentifier;
         String roleStr = request.getRole() != null ? request.getRole().trim().toUpperCase() : null;
 
-        // Auto-detect role if ID starts with C (Candidate) or V (Voter) and role wasn't explicitly matching
-        if (identifier.matches("(?i)^C\\d+$") && (roleStr == null || "VOTER".equalsIgnoreCase(roleStr))) {
-            roleStr = "CANDIDATE";
-        } else if (identifier.matches("(?i)^V\\d+$") && (roleStr == null || "CANDIDATE".equalsIgnoreCase(roleStr))) {
-            roleStr = "VOTER";
-        }
-
-        // Special handling for ADMIN
-        if ("ADMIN".equals(roleStr) || "admin".equalsIgnoreCase(rawIdentifier) || "admin".equalsIgnoreCase(cleanIdentifier)) {
+        // Dedicated separate login flow for ADMIN
+        if ("ADMIN".equalsIgnoreCase(roleStr)) {
             User admin = userRepository.findByIdIgnoreCase("admin")
                     .orElseGet(() -> {
                         User newAdmin = new User(
@@ -224,7 +217,27 @@ public class AuthService {
             );
         }
 
-        // Voter or Candidate
+        // Voter login: Candidate or Admin credentials must NOT work
+        if ("VOTER".equalsIgnoreCase(roleStr)) {
+            if (identifier.matches("(?i)^C\\d+$")) {
+                throw new IllegalArgumentException("Candidate credentials cannot be used for Voter login.");
+            }
+            if ("admin".equalsIgnoreCase(identifier)) {
+                throw new IllegalArgumentException("Admin credentials cannot be used for Voter login.");
+            }
+        }
+
+        // Candidate login: Voter or Admin credentials must NOT work
+        if ("CANDIDATE".equalsIgnoreCase(roleStr)) {
+            if (identifier.matches("(?i)^V\\d+$")) {
+                throw new IllegalArgumentException("Voter credentials cannot be used for Candidate login.");
+            }
+            if ("admin".equalsIgnoreCase(identifier)) {
+                throw new IllegalArgumentException("Admin credentials cannot be used for Candidate login.");
+            }
+        }
+
+        // Find Voter or Candidate by ID or Email
         Optional<User> userOpt = userRepository.findByIdIgnoreCase(cleanIdentifier);
         if (userOpt.isEmpty() && !cleanIdentifier.equalsIgnoreCase(rawIdentifier)) {
             userOpt = userRepository.findByIdIgnoreCase(rawIdentifier);
@@ -245,7 +258,22 @@ public class AuthService {
             }
         }
 
-        User user = userOpt.orElseThrow(() -> new IllegalArgumentException("Invalid user ID or password."));
+        User user = userOpt.orElseThrow(() -> new IllegalArgumentException(
+                "VOTER".equalsIgnoreCase(roleStr) ? "Invalid Voter ID or password." :
+                "CANDIDATE".equalsIgnoreCase(roleStr) ? "Invalid Candidate ID or password." :
+                "Invalid user ID or password."
+        ));
+
+        // Strict role enforcement
+        if (roleStr != null && !user.getRole().name().equalsIgnoreCase(roleStr)) {
+            if ("VOTER".equalsIgnoreCase(roleStr) && user.getRole() == Role.CANDIDATE) {
+                throw new IllegalArgumentException("Candidate credentials cannot be used for Voter login.");
+            }
+            if ("CANDIDATE".equalsIgnoreCase(roleStr) && user.getRole() == Role.VOTER) {
+                throw new IllegalArgumentException("Voter credentials cannot be used for Candidate login.");
+            }
+            throw new IllegalArgumentException("User role mismatch. This account is registered as " + user.getRole());
+        }
 
         String rawPass = request.getPassword() != null ? request.getPassword() : "";
         String trimmedPass = rawPass.trim();
@@ -253,15 +281,13 @@ public class AuthService {
         boolean matches = passwordEncoder.matches(rawPass, user.getPassword()) ||
                           passwordEncoder.matches(trimmedPass, user.getPassword()) ||
                           rawPass.equals(user.getPassword()) ||
-                          trimmedPass.equals(user.getPassword()) ||
-                          "admin".equals(rawPass) ||
-                          "admin".equals(trimmedPass);
+                          trimmedPass.equals(user.getPassword());
         if (!matches) {
-            throw new IllegalArgumentException("Invalid user ID or password.");
-        }
-
-        if (roleStr != null && !user.getRole().name().equalsIgnoreCase(roleStr)) {
-            throw new IllegalArgumentException("User role mismatch. This account is registered as " + user.getRole());
+            throw new IllegalArgumentException(
+                    "VOTER".equalsIgnoreCase(roleStr) ? "Invalid Voter ID or password." :
+                    "CANDIDATE".equalsIgnoreCase(roleStr) ? "Invalid Candidate ID or password." :
+                    "Invalid user ID or password."
+            );
         }
 
         auditService.log(

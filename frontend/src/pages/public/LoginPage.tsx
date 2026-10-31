@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { UserCheck, Award, ArrowRight, AlertCircle, Eye, EyeOff, Check, ShieldAlert } from 'lucide-react';
+import { UserCheck, Award, ArrowRight, AlertCircle, Eye, EyeOff, Check } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 
 type LoginRole = 'VOTER' | 'CANDIDATE';
@@ -22,6 +22,8 @@ export const LoginPage: React.FC = () => {
   const handleRoleChange = (newRole: LoginRole) => {
     setSearchParams({ role: newRole.toLowerCase() });
     setErrorMessage(null);
+    setId('');
+    setPassword('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,22 +40,44 @@ export const LoginPage: React.FC = () => {
       return;
     }
 
-    // Auto-detect role if ID starts with C or V
-    let effectiveRole: LoginRole = role;
-    if (/^C\d+$/i.test(cleanId) && role !== 'CANDIDATE') {
-      effectiveRole = 'CANDIDATE';
-      setSearchParams({ role: 'candidate' });
-    } else if (/^V\d+$/i.test(cleanId) && role !== 'VOTER') {
-      effectiveRole = 'VOTER';
-      setSearchParams({ role: 'voter' });
+    // Strict role validation
+    if (role === 'VOTER') {
+      if (/^C\d+$/i.test(cleanId)) {
+        setErrorMessage('Candidate credentials cannot be used for Voter login. Please select Candidate option.');
+        return;
+      }
+      if (/^admin$/i.test(cleanId)) {
+        setErrorMessage('Admin credentials cannot be used for Voter login.');
+        return;
+      }
+    } else if (role === 'CANDIDATE') {
+      if (/^V\d+$/i.test(cleanId)) {
+        setErrorMessage('Voter credentials cannot be used for Candidate login. Please select Voter option.');
+        return;
+      }
+      if (/^admin$/i.test(cleanId)) {
+        setErrorMessage('Admin credentials cannot be used for Candidate login.');
+        return;
+      }
     }
 
-    const result = await login(cleanId, cleanPassword, effectiveRole);
+    const result = await login(cleanId, cleanPassword, role);
 
     if (result.success) {
-      if (effectiveRole === 'VOTER') {
+      const currentUser = useAuthStore.getState().currentUser;
+      if (role === 'VOTER') {
+        if (currentUser?.role !== 'VOTER') {
+          useAuthStore.getState().logout();
+          setErrorMessage('Candidate credentials cannot be used for Voter login.');
+          return;
+        }
         navigate('/voter/profile');
       } else {
+        if (currentUser?.role !== 'CANDIDATE') {
+          useAuthStore.getState().logout();
+          setErrorMessage('Voter credentials cannot be used for Candidate login.');
+          return;
+        }
         navigate('/candidate/profile');
       }
     } else {
@@ -268,28 +292,6 @@ export const LoginPage: React.FC = () => {
             </Link>
           </span>
         </div>
-      </div>
-
-      <div style={{ textAlign: 'center', marginTop: '1.25rem' }}>
-        <Link
-          to="/admin"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.45rem',
-            color: '#475569',
-            fontSize: '0.85rem',
-            textDecoration: 'none',
-            fontWeight: 500,
-            padding: '0.4rem 0.85rem',
-            borderRadius: '6px',
-            backgroundColor: '#f1f5f9',
-            border: '1px solid #cbd5e1'
-          }}
-        >
-          <ShieldAlert size={15} color="#0284c7" />
-          <span>System Administrator? <strong>Go to Admin Console &rarr;</strong></span>
-        </Link>
       </div>
     </div>
   );
