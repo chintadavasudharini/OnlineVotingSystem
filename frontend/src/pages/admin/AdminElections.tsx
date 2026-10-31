@@ -396,8 +396,8 @@ export const AdminElections: React.FC = () => {
                 <tr>
                   <th>E.ID</th>
                   <th>Election Name</th>
-                  <th>Registration Period</th>
-                  <th>Voting Period</th>
+                  <th>Registration</th>
+                  <th>Voting</th>
                   <th>Status</th>
                   <th style={{ textAlign: 'center' }}>Candidates</th>
                   <th style={{ textAlign: 'center' }}>Votes Cast</th>
