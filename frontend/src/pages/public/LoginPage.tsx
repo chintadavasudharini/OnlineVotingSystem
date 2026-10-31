@@ -28,15 +28,30 @@ export const LoginPage: React.FC = () => {
     e.preventDefault();
     setErrorMessage(null);
 
-    if (!id.trim() || !password) {
+    let cleanId = id.trim();
+    // Strip prefixes like "candidate", "voter" if user enters them
+    cleanId = cleanId.replace(/^(candidate|voter)\s*[:#-]?\s*/i, '').replace(/^([a-zA-Z])\s+(\d+)$/i, '$1$2').trim();
+    const cleanPassword = password.trim();
+
+    if (!cleanId || !cleanPassword) {
       setErrorMessage(`Please enter your ${role === 'VOTER' ? 'Voter' : 'Candidate'} ID and password.`);
       return;
     }
 
-    const result = await login(id, password, role);
+    // Auto-detect role if ID starts with C or V
+    let effectiveRole: LoginRole = role;
+    if (/^C\d+$/i.test(cleanId) && role !== 'CANDIDATE') {
+      effectiveRole = 'CANDIDATE';
+      setSearchParams({ role: 'candidate' });
+    } else if (/^V\d+$/i.test(cleanId) && role !== 'VOTER') {
+      effectiveRole = 'VOTER';
+      setSearchParams({ role: 'voter' });
+    }
+
+    const result = await login(cleanId, cleanPassword, effectiveRole);
 
     if (result.success) {
-      if (role === 'VOTER') {
+      if (effectiveRole === 'VOTER') {
         navigate('/voter/profile');
       } else {
         navigate('/candidate/profile');

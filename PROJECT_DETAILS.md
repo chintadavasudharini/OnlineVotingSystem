@@ -1,16 +1,20 @@
-# 🗳️ Online Voting System — Enterprise Technical Specification & Architecture Dossier
+# 🗳️ SecureVote — Enterprise Technical Specification & Architecture Dossier
 
 <div align="center">
 
-**Document Version:** `1.0.0-RELEASE` | **Status:** `Production Ready` | **Engineering Tier:** `Enterprise / Senior Staff`  
+**Document Version:** `2.0.0-ENTERPRISE-RELEASE` | **Status:** `Production Deployed` | **Engineering Tier:** `Enterprise / Senior Staff`  
 **Author & Lead Architect:** [Chintada Vasudharini](https://github.com/chintadavasudharini)  
-**Repository:** [https://github.com/chintadavasudharini/OnlineVotingSystem](https://github.com/chintadavasudharini/OnlineVotingSystem) | **LinkedIn Publication:** [Read Article](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/)
+**Repository:** [https://github.com/chintadavasudharini/OnlineVotingSystem](https://github.com/chintadavasudharini/OnlineVotingSystem) | **LinkedIn Publication:** [Read Article](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/)  
+**Live Production API:** [https://securevote-onlinevotingsystem-backend.onrender.com](https://securevote-onlinevotingsystem-backend.onrender.com)
 
 [![Java 21](https://img.shields.io/badge/Language-Java%2021%20LTS-007396?style=flat-square&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
 [![Spring Boot 3.3.4](https://img.shields.io/badge/Framework-Spring%20Boot%203.3.4-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![React 19](https://img.shields.io/badge/Frontend-React%2019-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
 [![TypeScript 5](https://img.shields.io/badge/Typing-TypeScript%205-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![PostgreSQL 18](https://img.shields.io/badge/Database-PostgreSQL%2018-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![PostgreSQL 16/18](https://img.shields.io/badge/Database-PostgreSQL%2016%2F18-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Container-Docker%20Multi--Stage-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Razorpay](https://img.shields.io/badge/Payments-Razorpay%20Gateway-02042B?style=flat-square&logo=razorpay&logoColor=0C2340)](https://razorpay.com/)
+[![Render](https://img.shields.io/badge/Cloud-Render.com-46E3B7?style=flat-square&logo=render&logoColor=white)](https://render.com/)
 [![Spring Security 6](https://img.shields.io/badge/Security-Spring%20Security%206-6DB33F?style=flat-square&logo=springsecurity&logoColor=white)](https://spring.io/projects/spring-security)
 [![JWT Stateless](https://img.shields.io/badge/Auth-HMAC--SHA256%20JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 [![Vite 8](https://img.shields.io/badge/Bundler-Vite%208-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -21,99 +25,98 @@
 
 ## 📑 Executive Table of Contents
 
-1. [Architectural Vision & Design Principles](#1-architectural-vision--design-principles)
-2. [End-to-End System Landscape & Topology](#2-end-to-end-system-landscape--topology)
+1. [Architectural Vision & System Invariants](#1-architectural-vision--system-invariants)
+2. [End-to-End System Landscape & Cloud Topology](#2-end-to-end-system-landscape--cloud-topology)
 3. [Technology Matrix & Decision Rationale](#3-technology-matrix--decision-rationale)
 4. [Role-Based Access Control (RBAC) & Identity Governance](#4-role-based-access-control-rbac--identity-governance)
 5. [Deterministic Temporal Election State Machine](#5-deterministic-temporal-election-state-machine)
-6. [PostgreSQL Schema & Relational Integrity Modeling](#6-postgresql-schema--relational-integrity-modeling)
-7. [Security Architecture, Cryptography & Threat Mitigation](#7-security-architecture-cryptography--threat-mitigation)
-8. [Comprehensive REST API Contracts](#8-comprehensive-rest-api-contracts)
-9. [Frontend Engineering & Reactive State Architecture](#9-frontend-engineering--reactive-state-architecture)
-10. [Audit Logging & Compliance Ledger](#10-audit-logging--compliance-ledger)
-11. [Build, Quality Assurance & Verification Metrics](#11-build-quality-assurance--verification-metrics)
-12. [Postman Automated Test Harness](#12-postman-automated-test-harness)
-13. [Step-by-Step Production & Developer Run Guide](#13-step-by-step-production--developer-run-guide)
-14. [Repository & Project Attribution](#14-repository--project-attribution)
+6. [Candidate Nomination & Razorpay Payment Architecture](#6-candidate-nomination--razorpay-payment-architecture)
+7. [Public Election Board & Live Candidate Roster](#7-public-election-board--live-candidate-roster)
+8. [PostgreSQL Schema & Relational Integrity Modeling](#8-postgresql-schema--relational-integrity-modeling)
+9. [Security Architecture, Cryptography & Threat Mitigation](#9-security-architecture-cryptography--threat-mitigation)
+10. [Comprehensive REST API Contracts & Schemas](#10-comprehensive-rest-api-contracts--schemas)
+11. [Frontend Engineering, SPA Refresh Guard & Reactive State](#11-frontend-engineering-spa-refresh-guard--reactive-state)
+12. [Audit Logging & Compliance Ledger](#12-audit-logging--compliance-ledger)
+13. [Docker Multi-Stage Build & Containerization](#13-docker-multi-stage-build--containerization)
+14. [Render Cloud Deployment Architecture](#14-render-cloud-deployment-architecture)
+15. [Automated Quality Verification & Postman Test Harness](#15-automated-quality-verification--postman-test-harness)
+16. [Developer Quick Start & Production Runbook](#16-developer-quick-start--production-runbook)
+17. [Attribution, Repository & Licensing](#17-attribution-repository--licensing)
 
 ---
 
-## 1. Architectural Vision & Design Principles
+## 1. Architectural Vision & System Invariants
 
-The **Online Voting System** is an auditable, high-concurrency electronic voting engine engineered to solve fundamental challenges in digital democracy:
+The **SecureVote Online Voting System** is an auditable, high-concurrency electronic voting and electoral governance engine designed to resolve fundamental vulnerabilities in digital balloting:
 
 ```
-          ┌─────────────────────────────────────────────────────────────┐
-          │                    CORE SYSTEM GUARANTEES                   │
-          ├──────────────────────────────┬──────────────────────────────┤
-          │  Zero Double-Voting          │  Deterministic Lifecycles    │
-          │  Physical database barrier   │  Dynamic UTC phase triggers  │
-          ├──────────────────────────────┼──────────────────────────────┤
-          │  Stateless Non-Repudiation   │  Constitutional Lineage      │
-          │  HMAC-SHA256 signed JWTs     │  Candidate ➔ Voter linkage   │
-          └──────────────────────────────┴──────────────────────────────┘
+          ┌────────────────────────────────────────────────────────────────────────┐
+          │                         CORE SYSTEM GUARANTEES                         │
+          ├──────────────────────────────┬─────────────────────────────────────────┤
+          │  Zero Double-Voting          │  Deterministic Temporal Lifecycles      │
+          │  Physical database barrier   │  Calculated on-the-fly from UTC offsets │
+          ├──────────────────────────────┼─────────────────────────────────────────┤
+          │  Stateless Non-Repudiation   │  Constitutional Candidate Lineage       │
+          │  HMAC-SHA256 signed JWTs     │  Age >= 25 & active voter verification  │
+          ├──────────────────────────────┼─────────────────────────────────────────┤
+          │  Razorpay Financial Proof    │  Global SPA Refresh Persistence         │
+          │  HMAC signature validation   │  URL & role invariant across reloads    │
+          └──────────────────────────────┴─────────────────────────────────────────┘
 ```
 
 ### Core Design Tenets:
-1. **Mathematical Single-Vote Integrity**: In electronic voting, application-layer memory checks are insufficient under concurrent race conditions. The system pushes the non-repudiation barrier into the PostgreSQL storage engine via composite unique keys (`UNIQUE(election_id, voter_id)`).
-2. **Strict Temporal Determinism**: No administrator or actor can manually alter active ballot states. Phases transition dynamically based on atomic UTC comparisons against `registrationStart`, `registrationEnd`, `votingStart`, and `votingEnd`.
-3. **Stateless Security Boundary**: Using Spring Security 6 and JJWT 0.12.6, all requests carry cryptographic identity proof with zero in-memory session baggage on the server.
-4. **Constitutional Lineage Enactment**: A candidate cannot exist in a vacuum. Nominated leaders must be linked to a verified voter account of legal age ($\ge 25$ years old), preventing ghost candidacies.
-5. **Decoupled Reactive Interface**: React 19 + TypeScript provides client-side validation (Zod schemas), reactive local persistent storage, and optimistic UI updates without blocking backend threads.
+1. **Mathematical Single-Vote Integrity**: In electronic voting, application-layer memory checks fail under concurrent race conditions. The system pushes the single-ballot invariant into the PostgreSQL relational engine via a composite unique constraint (`UNIQUE(election_id, voter_id)`).
+2. **Temporal Determinism**: Election states transition automatically and immutably based on atomic timestamp ranges. No administrator can alter active balloting state.
+3. **Financial Candidacy Verification**: Candidates must deposit an official nomination security deposit (₹100 / 10000 paise) via Razorpay Orders and HMAC-SHA256 signature verification before their nomination is accepted.
+4. **Constitutional Lineage**: A candidate account must be created from a verified voter account of legal age ($\ge 25$ years old), preventing fraudulent or unverified nominees.
+5. **Session & Routing Invariance**: A browser refresh preserves the exact active URL and authorization context without kicking the user to the landing page or dashboard.
 
 ---
 
-## 2. End-to-End System Landscape & Topology
+## 2. End-to-End System Landscape & Cloud Topology
 
 ```
 +---------------------------------------------------------------------------------------+
 |                                    CLIENT TIER                                        |
-|                             React 19 + TypeScript (Vite 8)                           |
+|                          React 19 + TypeScript (Vite 8)                               |
 |  +---------------------------+ +----------------------------+ +--------------------+  |
 |  |     Voter Dashboard       | |      Candidate Portal      | |    Admin Console   |  |
 |  |   - Identity Card         | |    - Nomination Filing     | |   - Schedule Phase |  |
-|  |   - Ballot Cast UI        | |    - Manifesto Builder     | |   - Audit Monitor  |  |
+|  |   - Ballot Cast UI        | |    - Razorpay Checkout     | |   - Audit Monitor  |  |
 |  |   - Certified Results     | |    - Live Campaign Tally   | |   - Certify Winner |  |
 |  +---------------------------+ +----------------------------+ +--------------------+  |
 +-------------------------------------------+-------------------------------------------+
                                             | HTTPS / JSON (Bearer JWT)
                                             v
 +---------------------------------------------------------------------------------------+
-|                               SPRING BOOT 3.3.4 BACKEND                               |
+|                        SPRING BOOT 3.3.4 BACKEND (DOCKER)                             |
 |                                                                                       |
-|  [Security Layer]                                                                     |
+|  [Security Tier]                                                                      |
 |    SecurityFilterChain ──► JwtAuthenticationFilter ──► Delegated Access Interceptor   |
 |                                                                                       |
 |  [REST API Controllers]                                                               |
-|    AuthController ──► ElectionController ──► CandidateController ──► VoteController   |
-|    VoterController ──► AuditLogController ──► GlobalExceptionHandler                  |
+|    RootController ──► AuthController ──► ElectionController ──► CandidateController  |
+|    PaymentController (Razorpay Orders & Verify) ──► VoteController ──► AuditLogCtrl   |
 |                                                                                       |
 |  [Transactional Service Layer]                                                        |
-|    AuthService ──► ElectionService ──► CandidateService ──► VoteService               |
-|    AuditService (Asynchronous Ledger Ingestion)                                       |
+|    AuthService ──► ElectionService ──► CandidateService ──► PaymentService            |
+|    VoteService ──► AuditService (Asynchronous Ledger Ingestion)                       |
 |                                                                                       |
 |  [Data Access Layer]                                                                  |
 |    Spring Data JPA Repositories (Hibernate 6.5.3 ORM)                                  |
 +-------------------------------------------+-------------------------------------------+
                                             | HikariCP Connection Pool (JDBC)
-                                            v
-+---------------------------------------------------------------------------------------+
-|                               PERSISTENCE TIER (PostgreSQL 18)                         |
-|                                                                                       |
-|  [Core Tables]                                                                        |
-|    +--------------------+  +----------------------+  +-----------------------------+  |
-|    |      users         |  |      elections       |  |   candidate_registrations   |  |
-|    |  (RBAC Identities) |  | (Temporal Lifecycle) |  |  (Unique Candidate Election)|  |
-|    +--------------------+  +----------------------+  +-----------------------------+  |
-|               |                        |                            |                 |
-|               +-----------+------------+                            |                 |
-|                           |                                         |                 |
-|                           v                                         v                 |
-|              +--------------------------+              +--------------------------+   |
-|              |          votes           |              |        audit_logs        |   |
-|              | UNIQUE(election, voter)  |              |    (Chronological Log)   |   |
-|              +--------------------------+              +--------------------------+   |
-+---------------------------------------------------------------------------------------+
+                      +---------------------+---------------------+
+                      |                                           |
+                      v                                           v
++-------------------------------------------+   +---------------------------------------+
+|      PERSISTENCE TIER (PostgreSQL)        |   |           RAZORPAY GATEWAY            |
+|  - users (RBAC & Lineage)                 |   |  - Orders API (Server-Side Creation)  |
+|  - elections (Temporal Lifecycles)        |   |  - Client Checkout (v1/checkout.js)  |
+|  - candidate_registrations (Deposits)     |   |  - Webhook & Signature Verification   |
+|  - votes (UNIQUE: election_id, voter_id)  |   +---------------------------------------+
+|  - audit_logs (Immutable Ledger)          |
++-------------------------------------------+
 ```
 
 ---
@@ -122,24 +125,26 @@ The **Online Voting System** is an auditable, high-concurrency electronic voting
 
 | Layer | Component | Version | Architectural Rationale |
 |---|---|---|---|
-| **Runtime** | Java LTS | `21.0.12.1` | Long-Term Support, pattern matching for switch, record classes, and virtual thread readiness. |
+| **Runtime** | Java LTS | `21.0.12.1` | Long-Term Support, pattern matching, record classes, and virtual thread readiness. |
 | **Backend Core** | Spring Boot | `3.3.4` | Modern enterprise baseline (Spring Framework 6.1, Jakarta EE 10, Tomcat 10.1). |
 | **Security** | Spring Security | `6.1.13` | Component-based security filter chain, method security via `@PreAuthorize`. |
-| **Cryptography** | JJWT | `0.12.6` | Modern modular JWT library (`jjwt-api`, `jjwt-impl`, `jjwt-jackson`) utilizing secure key generation. |
+| **Payment Gateway** | Razorpay REST API | `v1` | PCI-DSS certified gateway with server-side HMAC-SHA256 signature verification. |
+| **Cryptography** | JJWT | `0.12.6` | Modern modular JWT library (`jjwt-api`, `jjwt-impl`, `jjwt-jackson`) utilizing 256-bit keys. |
 | **Data Layer** | Spring Data JPA | `3.3.4` | Abstraction over Hibernate 6 with derived queries and type-safe transactional boundaries. |
-| **Database** | PostgreSQL | `18.x` | Industry benchmark for ACID compliance, composite uniqueness enforcement, and row-level locking. |
+| **Database** | PostgreSQL | `16 / 18` | Industry benchmark for ACID compliance, composite uniqueness enforcement, and row-level locking. |
+| **Container** | Docker Multi-Stage | `24+` | Optimized multi-stage build: Maven 3.9.6 build stage + lightweight Eclipse Temurin 21 JRE runtime. |
+| **Cloud Hosting** | Render.com | Cloud | Fully managed PostgreSQL + Docker Web Service with automatic git-triggered deploys. |
 | **Client Core** | React | `19.2.8` | Declarative UI, Concurrent rendering, unified hooks ecosystem. |
 | **Typing** | TypeScript | `5.x / 6.0` | Comprehensive interface modeling eliminating runtime `undefined` errors. |
-| **Client Bundler**| Vite | `8.3.1` | Ultra-fast native ES-module development server with Rolldown minification. |
+| **Client Bundler**| Vite | `8.3.1` | Native ES-module development server with Rolldown minification. |
 | **State Store** | Zustand | `5.0.15` | Minimal footprint, zero boilerplate, persistent client hydration. |
-| **Form Parsing** | Zod | `4.6.5` | Strict schema validation matching backend DTO constraints on the client. |
-| **Icons** | Lucide React | `1.48.0` | Accessible tree-shakeable SVG icons. |
+| **Form Validation**| Zod | `4.6.5` | Strict schema validation matching backend DTO constraints on the client. |
 
 ---
 
 ## 4. Role-Based Access Control (RBAC) & Identity Governance
 
-The Online Voting System enforces strict separation of privileges across three primary personas:
+The system enforces strict role boundaries:
 
 ```mermaid
 flowchart TD
@@ -151,24 +156,24 @@ flowchart TD
 
     subgraph AdminCap ["Admin Capabilities"]
         A1["Create & Schedule Elections"]
-        A2["Manage Election Timestamps"]
-        A3["Audit Voter & Candidate Directories"]
-        A4["Inspect System Audit Logs"]
-        A5["Publish Certified Election Tallies"]
+        A2["Audit Voter & Candidate Directories"]
+        A3["Inspect Compliance Audit Logs"]
+        A4["Publish Certified Election Tallies"]
     end
 
     subgraph VoterCap ["Voter Capabilities"]
         V1["Self-Register (Age >= 18)"]
         V2["Receive Sequential Voter ID (V1, V2...)"]
-        V3["Cast Atomic Vote during VOTING_OPEN"]
-        V4["Elevate to Candidate if Age >= 25"]
+        V3["Cast Atomic Ballot during VOTING_OPEN"]
+        V4["Elevate to Candidate (Age >= 25)"]
     end
 
     subgraph CandidateCap ["Candidate Capabilities"]
-        C1["Inherit Verified Voter Identity"]
+        C1["Inherit Verified Voter Identity (voter_id)"]
         C2["Receive Candidate ID (C1, C2...)"]
-        C3["File Manifesto & Pledges during REGISTRATION_OPEN"]
-        C4["Track Real-time & Certified Results"]
+        C3["Deposit Security Fee (₹100 via Razorpay)"]
+        C4["File Manifesto & Pledges during REGISTRATION_OPEN"]
+        C5["Access Live Campaign Metrics & Certified Tallies"]
     end
 
     Admin --> AdminCap
@@ -180,17 +185,21 @@ flowchart TD
 
 | Operational Resource | HTTP Verb & URI | `ANONYMOUS` | `ROLE_VOTER` | `ROLE_CANDIDATE` | `ROLE_ADMIN` |
 |---|---|:---:|:---:|:---:|:---:|
+| System Discovery & Health | `GET /` | ✅ | ✅ | ✅ | ✅ |
 | User Registration | `POST /api/auth/register-voter` | ✅ | ❌ | ❌ | ❌ |
 | Candidate Elevation | `POST /api/auth/register-candidate` | ✅ | ✅ | ❌ | ❌ |
 | Universal Login | `POST /api/auth/login` | ✅ | ✅ | ✅ | ✅ |
+| Payment Gateway Config | `GET /api/payment/config` | ✅ | ✅ | ✅ | ✅ |
+| Create Razorpay Order | `POST /api/payment/create-order` | ❌ | ❌ | ✅ | ❌ |
+| Verify Razorpay Payment | `POST /api/payment/verify` | ❌ | ❌ | ✅ | ❌ |
 | Public Election List | `GET /api/elections` | ✅ | ✅ | ✅ | ✅ |
 | Election Details | `GET /api/elections/{id}` | ✅ | ✅ | ✅ | ✅ |
 | Create Election | `POST /api/elections` | ❌ | ❌ | ❌ | ✅ |
 | Publish Results | `POST /api/elections/{id}/publish-results` | ❌ | ❌ | ❌ | ✅ |
 | Candidate Roster | `GET /api/candidates/election/{id}` | ✅ | ✅ | ✅ | ✅ |
-| File Nomination | `POST /api/candidates/register-for-election` | ❌ | ❌ | ✅ | ❌ |
-| Check Nomination | `GET /api/candidates/is-registered` | ❌ | ❌ | ✅ | ❌ |
-| Directory Roster | `GET /api/candidates` | ❌ | ❌ | ❌ | ✅ |
+| File Nomination & Pay | `POST /api/candidates/register-for-election` | ❌ | ❌ | ✅ | ❌ |
+| Check Nomination Status| `GET /api/candidates/is-registered` | ❌ | ❌ | ✅ | ❌ |
+| Candidate Directory | `GET /api/candidates` | ❌ | ❌ | ❌ | ✅ |
 | Cast Ballot | `POST /api/votes/cast` | ❌ | ✅ | ❌ | ❌ |
 | Check Voted Status | `GET /api/votes/has-voted/{id}` | ❌ | ✅ | ❌ | ❌ |
 | Certified Results | `GET /api/votes/results/{id}` | ✅* | ✅* | ✅* | ✅ |
@@ -198,32 +207,32 @@ flowchart TD
 | Personal Profile | `GET /api/voters/profile` | ❌ | ✅ | ✅ | ✅ |
 | Audit Trail Ledger | `GET /api/audit-logs` | ❌ | ❌ | ❌ | ✅ |
 
-*\*Note: Public and voters can access results if `resultsPublished == true`; Admins have unrestricted real-time audit access.*
+*\*Public and voters can view results once `resultsPublished == true`; Admins have unrestricted real-time access.*
 
 ---
 
 ## 5. Deterministic Temporal Election State Machine
 
-The election state machine operates without cron jobs or manual polling triggers. Every query computes state dynamically from UTC clock offsets:
+The election state engine executes purely dynamic transitions based on atomic timestamp comparisons:
 
 ```mermaid
 stateDiagram-v2
     [*] --> UPCOMING : Admin Creates Election
     
     state UPCOMING {
-        [*] --> Phase1 : Current Time < Registration Start
-        Phase1 --> Phase2 : Between Registration End & Voting Start
+        [*] --> PreRegistration : Time < registrationStart
+        PreRegistration --> PostRegistration : registrationEnd < Time < votingStart
     }
 
-    UPCOMING --> REGISTRATION_OPEN : Current Time >= registrationStart && <= registrationEnd
-    REGISTRATION_OPEN --> UPCOMING : Current Time > registrationEnd && < votingStart
-    UPCOMING --> VOTING_OPEN : Current Time >= votingStart && <= votingEnd
-    VOTING_OPEN --> COMPLETED : Current Time > votingEnd
-    COMPLETED --> RESULTS_PUBLISHED : Admin executes publishResults()
+    UPCOMING --> REGISTRATION_OPEN : Time >= registrationStart && Time <= registrationEnd
+    REGISTRATION_OPEN --> UPCOMING : Time > registrationEnd && Time < votingStart
+    UPCOMING --> VOTING_OPEN : Time >= votingStart && Time <= votingEnd
+    VOTING_OPEN --> COMPLETED : Time > votingEnd
+    COMPLETED --> RESULTS_PUBLISHED : Super Admin executes publishResults()
     RESULTS_PUBLISHED --> [*]
 ```
 
-### Formal State Invariants:
+### Mathematical State Specification:
 
 $$\text{Status}(E, t) = \begin{cases} 
 \text{UPCOMING} & \text{if } t < E.\text{registrationStart} \\
@@ -234,15 +243,65 @@ $$\text{Status}(E, t) = \begin{cases}
 \text{RESULTS\_PUBLISHED} & \text{if } t > E.\text{votingEnd} \land E.\text{resultsPublished}
 \end{cases}$$
 
-### Enforced Rules:
-- **During `REGISTRATION_OPEN`**: Candidates may register their nomination and manifesto. No voter can vote.
-- **Between `registrationEnd` and `votingStart`**: Nominations are locked. Public scrutinizes manifestos.
-- **During `VOTING_OPEN`**: Balloting is live. Nominations are permanently closed.
-- **During `COMPLETED`**: Voting is closed. Database holds sealed tallies until official certification.
+---
+
+## 6. Candidate Nomination & Razorpay Payment Architecture
+
+Candidates must deposit an official nomination security deposit of **₹100.00** (`10000` paise) verified via Razorpay before their candidacy is confirmed:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Candidate as Candidate (C1)
+    participant UI as React Client
+    participant API as Spring Boot API
+    participant RZP as Razorpay Gateway
+    participant DB as PostgreSQL
+
+    Candidate->>UI: Select Election & Enter Manifesto Details
+    Candidate->>UI: Click "Pay ₹100 via Razorpay & Confirm Registration"
+    UI->>API: POST /api/payment/create-order {electionId: "E1", amount: 10000}
+    API->>RZP: POST /v1/orders (Basic Auth with key:secret)
+    RZP-->>API: Returns {id: "order_TuHvdI512HLFwM", amount: 10000, status: "created"}
+    API-->>UI: Order metadata & Razorpay Key ID
+    UI->>Candidate: Opens Razorpay Standard Checkout Modal
+    Candidate->>RZP: Authorizes payment (UPI / Card / NetBanking)
+    RZP-->>UI: Returns {razorpay_payment_id, razorpay_order_id, razorpay_signature}
+    UI->>API: POST /api/payment/verify {orderId, paymentId, signature}
+    API->>API: Compute HMAC-SHA256(orderId + "|" + paymentId, secret)
+    API-->>UI: Signature matches! {success: true}
+    UI->>API: POST /api/candidates/register-for-election {manifesto, paymentId, orderId}
+    API->>DB: INSERT INTO candidate_registrations (payment_id, payment_status: "PAID", amount: 100.0)
+    API->>DB: INSERT INTO audit_logs ("Candidate C1 registered with payment pay_xxx")
+    API-->>UI: Candidate Registration Confirmed
+    UI->>Candidate: Displays Payment Receipt & Official Candidate Card
+```
 
 ---
 
-## 6. PostgreSQL Schema & Relational Integrity Modeling
+## 7. Public Election Board & Live Candidate Roster
+
+The Public Election Board provides real-time transparency for voters and citizens:
+
+1. **Upcoming & Registration Open Elections**:
+   - Lists participating candidates in the standardized format:  
+     `C.ID - NAME` (e.g. `C1 - Jane Doe`)
+   - If no candidates have registered: Displays `No candidates participating.`
+   - Interactive Call-to-Actions: *Login as Candidate to Register* or *Registration Open*.
+
+2. **Voting Open Elections**:
+   - Displays participating candidates dynamically for that specific election.
+   - Interactive CTA: *Login to Cast Vote*.
+
+3. **Completed Elections**:
+   - **Candidates Participated**: Lists all candidates who ran in that election (`C.ID - NAME`).
+   - **Total Voters**: Dynamically queries and displays total registered voters in the system.
+   - **Total Votes Cast**: Dynamically tallies all verified votes cast in that election.
+   - Status badge: `Voting Closed • Results Awaiting Publication` (or Certified Winner banner when published).
+
+---
+
+## 8. PostgreSQL Schema & Relational Integrity Modeling
 
 ```mermaid
 erDiagram
@@ -253,79 +312,81 @@ erDiagram
     users ||--o{ audit_logs : "audits"
 
     users {
-        VARCHAR(50) id PK "e.g., admin, V1, C1"
-        VARCHAR(100) name
-        VARCHAR(150) email UK
-        DATE dob
+        VARCHAR(50) id PK "admin, V1, C1"
+        VARCHAR(100) name "Citizen Name"
+        VARCHAR(150) email UK "Unique Email Address"
+        DATE dob "Date of Birth"
         INTEGER age "Voter >= 18, Candidate >= 25"
         VARCHAR(255) password "BCrypt Salted Hash"
         VARCHAR(20) role "ADMIN | VOTER | CANDIDATE"
-        VARCHAR(50) voter_id FK "Lineage to parent voter"
+        VARCHAR(50) voter_id FK "Lineage to parent voter identity"
         VARCHAR(20) status "ACTIVE"
-        TIMESTAMP created_at
+        TIMESTAMP created_at "Account Creation Timestamp"
     }
 
     elections {
-        VARCHAR(50) id PK "e.g., E1, E2"
-        VARCHAR(200) title
-        TEXT description
-        TIMESTAMP registration_start
-        TIMESTAMP registration_end
-        TIMESTAMP voting_start
-        TIMESTAMP voting_end
-        BOOLEAN results_published
-        TIMESTAMP created_at
+        VARCHAR(50) id PK "E1, E2, E3..."
+        VARCHAR(200) title "Election Title"
+        TEXT description "Description & Scope"
+        TIMESTAMP registration_start "Nomination Window Start"
+        TIMESTAMP registration_end "Nomination Window End"
+        TIMESTAMP voting_start "Balloting Window Start"
+        TIMESTAMP voting_end "Balloting Window End"
+        BOOLEAN results_published "Certification Flag"
+        TIMESTAMP created_at "Creation Timestamp"
     }
 
     candidate_registrations {
         VARCHAR(60) id PK "CR-UUID"
-        VARCHAR(50) candidate_id FK
-        VARCHAR(50) election_id FK
-        VARCHAR(255) manifesto_title
-        TEXT vision_statement
-        TEXT key_promises
-        TIMESTAMP registered_at
+        VARCHAR(50) candidate_id FK "Foreign Key to users.id"
+        VARCHAR(50) election_id FK "Foreign Key to elections.id"
+        VARCHAR(255) manifesto_title "Manifesto Title"
+        TEXT vision_statement "Candidate Vision"
+        TEXT key_promises "Campaign Pledges"
+        VARCHAR(100) payment_id "Razorpay Payment ID (pay_xxx)"
+        VARCHAR(100) order_id "Razorpay Order ID (order_xxx)"
+        VARCHAR(30) payment_status "PAID"
+        DOUBLE_PRECISION payment_amount "₹100.00"
+        TIMESTAMP paid_at "Payment Verification Timestamp"
+        TIMESTAMP registered_at "Registration Timestamp"
     }
 
     votes {
         VARCHAR(60) id PK "VOTE-UUID"
-        VARCHAR(50) election_id FK
-        VARCHAR(50) voter_id FK
-        VARCHAR(50) candidate_id FK
-        TIMESTAMP voted_at
+        VARCHAR(50) election_id FK "Composite Unique (election_id, voter_id)"
+        VARCHAR(50) voter_id FK "Composite Unique"
+        VARCHAR(50) candidate_id FK "Recipient Candidate"
+        TIMESTAMP voted_at "Atomic Timestamp"
     }
 
     audit_logs {
-        BIGINT id PK "auto-generated"
-        TIMESTAMP timestamp
-        VARCHAR(50) user_id
-        VARCHAR(30) role
-        VARCHAR(100) action
-        TEXT details
+        BIGINT id PK "Auto-increment ID"
+        TIMESTAMP timestamp "Event Timestamp"
+        VARCHAR(50) user_id "Actor Identity"
+        VARCHAR(30) role "Actor Role"
+        VARCHAR(100) action "Action Category"
+        TEXT details "Audit Details"
     }
 ```
 
-### Relational Constraints Breakdown:
-1. **Double-Voting Prevention Barrier**:
-   ```sql
-   ALTER TABLE votes 
-   ADD CONSTRAINT uk_votes_election_voter UNIQUE (election_id, voter_id);
-   ```
-   *Guarantees that regardless of concurrent HTTP requests, PostgreSQL rejects duplicate votes with an error code.*
-2. **Single Nomination Enforcement**:
-   ```sql
-   ALTER TABLE candidate_registrations 
-   ADD CONSTRAINT uk_candidate_election UNIQUE (candidate_id, election_id);
-   ```
-3. **Email Deduplication**:
-   ```sql
-   ALTER TABLE users 
-   ADD CONSTRAINT uk_users_email UNIQUE (email);
-   ```
+### Relational Database Constraints:
+```sql
+-- 1. Double-Voting Prevention Barrier
+ALTER TABLE votes 
+ADD CONSTRAINT uk_votes_election_voter UNIQUE (election_id, voter_id);
+
+-- 2. Single Nomination Per Election Enforcement
+ALTER TABLE candidate_registrations 
+ADD CONSTRAINT uk_candidate_election UNIQUE (candidate_id, election_id);
+
+-- 3. Email Uniqueness
+ALTER TABLE users 
+ADD CONSTRAINT uk_users_email UNIQUE (email);
+```
 
 ---
 
-## 7. Security Architecture, Cryptography & Threat Mitigation
+## 9. Security Architecture, Cryptography & Threat Mitigation
 
 ```
                   ┌────────────────────────────────────────────────────────┐
@@ -335,24 +396,24 @@ erDiagram
                                               ▼
                   ┌────────────────────────────────────────────────────────┐
                   │                 CorsFilter Evaluation                  │
-                  │   - Allows http://localhost:5174                       │
-                  │   - Verifies Allowed Methods (GET, POST, OPTIONS...)   │
+                  │   - Wildcard origin matching for production domains    │
+                  │   - Verifies allowed methods (GET, POST, OPTIONS...)   │
                   └───────────────────────────┬────────────────────────────┘
                                               │
                                               ▼
                   ┌────────────────────────────────────────────────────────┐
                   │             JwtAuthenticationFilter                    │
                   │   1. Extracts Bearer token from Authorization Header   │
-                  │   2. Validates HMAC-SHA256 signature via SecretKey     │
+                  │   2. Validates HMAC-SHA256 signature via secret key    │
                   │   3. Extracts subject (userId) & claim (role)          │
                   │   4. Instantiates UsernamePasswordAuthenticationToken  │
-                  │   5. Binds authority: ROLE_<ROLE> to SecurityContext   │
+                  │   5. Injects Principal into Spring SecurityContext     │
                   └───────────────────────────┬────────────────────────────┘
                                               │
                                               ▼
                   ┌────────────────────────────────────────────────────────┐
                   │               AuthorizationFilter                      │
-                  │   Checks endpoint patterns & @PreAuthorize rules      │
+                  │   Checks endpoint patterns & @PreAuthorize annotations │
                   └───────────────────────────┬────────────────────────────┘
                                               │
                                               ▼
@@ -361,223 +422,159 @@ erDiagram
                   └────────────────────────────────────────────────────────┘
 ```
 
-### Threat Mitigation Matrix:
+### Comprehensive Threat Defense Matrix:
 
 | Threat Category | Attack Vector | Engineering Defense Implementation |
 |---|---|---|
-| **Double Voting** | Concurrency / Replay / Multiple tabs | Compound uniqueness `UNIQUE(election_id, voter_id)` in PostgreSQL + JPA transactional verification. |
-| **Credential Sniffing** | Eavesdropping / Password cracking | Passwords salted and hashed with `BCryptPasswordEncoder`. Plaintext passwords never stored. |
-| **Session Fixation** | Stealing session cookie | Stateless session management (`SessionCreationPolicy.STATELESS`). No session cookies used. |
-| **Tampered Tokens** | Altering user ID or role | 256-bit cryptographically secure HMAC-SHA256 secret key verification. Signature failure immediately invalidates token. |
-| **Underage Voter Fraud**| Submitting birth dates < 18 yrs | Dual verification: Zod schema on client + Jakarta `@Min(18)` validator on backend. |
-| **Unauthorized Nominations**| Independent candidate signups | Backend requires valid voter ID proof, age $\ge 25$, and enforces 1:1 candidate-to-voter account lineage. |
-| **Out-of-Window Balloting**| Submitting votes before/after window | Service layer verifies dynamically calculated status is strictly `VOTING_OPEN`. |
+| **Double Voting** | Concurrency / Replay / Multiple tabs | Database compound uniqueness `UNIQUE(election_id, voter_id)` + JPA isolated transactional checks. |
+| **Payment Spoofing** | Forged transaction IDs / Tampered payloads | Server-side Razorpay Order generation + HMAC-SHA256 signature verification using server secret key. |
+| **Credential Sniffing** | Eavesdropping / Brute Force | Passwords salted and hashed with adaptive `BCryptPasswordEncoder`. Plaintext credentials never persisted. |
+| **Session Fixation** | Stealing cookies / Session hijacking | Stateless token architecture (`SessionCreationPolicy.STATELESS`). Zero server-side session state. |
+| **Token Tampering** | Manipulating user ID or role | 256-bit cryptographically secure HMAC-SHA256 secret key verification. Invalid signatures rejected instantly. |
+| **Underage Voter Fraud**| Birth date falsification (< 18 yrs) | Dual verification: Zod schema on client + Jakarta `@Min(18)` validator on backend. |
+| **Unauthorized Nominations**| Independent candidate signups | Enforces valid voter lineage, age $\ge 25$, and 1:1 candidate-to-voter account linkage. |
+| **Out-of-Window Balloting**| Early or late vote submissions | Service layer checks dynamically calculated status is strictly `VOTING_OPEN`. |
 
 ---
 
-## 8. Comprehensive REST API Contracts
+## 10. Comprehensive REST API Contracts & Schemas
 
-### 1. `POST /api/auth/register-voter`
-Enrolls a new citizen into the electoral roll.
-
-**Request Payload:**
+### 1. `GET /` — Public Health & API Discovery
+Returns live API metadata:
 ```json
 {
-  "name": "Jane Citizen",
-  "email": "jane@example.com",
-  "dob": "1997-03-22",
-  "age": 29,
-  "password": "SecurePassword123"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Voter registered successfully",
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiJ9...",
-    "id": "V1",
-    "name": "Jane Citizen",
-    "email": "jane@example.com",
-    "role": "VOTER",
-    "age": 29,
-    "dob": "1997-03-22",
-    "voterId": null,
-    "status": "ACTIVE"
+  "application": "SecureVote — Online Voting System API",
+  "status": "UP",
+  "version": "1.0.0",
+  "endpoints": {
+    "authLogin": "/api/auth/login",
+    "elections": "/api/elections",
+    "paymentConfig": "/api/payment/config"
   }
 }
 ```
 
----
-
-### 2. `POST /api/auth/register-candidate`
-Elevates an existing verified voter ($\ge 25$ yrs) to candidate status.
-
-**Request Payload:**
-```json
-{
-  "voterId": "V1",
-  "password": "CandidateSecret456"
-}
-```
-
-**Response (200 OK):**
+### 2. `GET /api/payment/config` — Razorpay Gateway Config
+Returns public gateway credentials:
 ```json
 {
   "success": true,
-  "message": "Candidate account created successfully",
+  "message": "Payment configuration",
   "data": {
-    "token": "eyJhbGciOiJIUzI1NiJ9...",
-    "id": "C1",
-    "name": "Jane Citizen",
-    "email": "cand.c1.jane@example.com",
-    "role": "CANDIDATE",
-    "age": 29,
-    "dob": "1997-03-22",
-    "voterId": "V1",
-    "status": "ACTIVE"
+    "keyId": "rzp_test_TuHZ9A0hAgLC6b",
+    "nominationFee": 100.0,
+    "currency": "INR"
   }
 }
 ```
 
----
-
-### 3. `POST /api/auth/login`
-Universal authentication endpoint for Admins, Voters, and Candidates.
-
-**Request Payload:**
-```json
-{
-  "identifier": "V1",
-  "password": "SecurePassword123",
-  "role": "VOTER"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Login successful",
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiJ9...",
-    "id": "V1",
-    "name": "Jane Citizen",
-    "email": "jane@example.com",
-    "role": "VOTER",
-    "age": 29,
-    "status": "ACTIVE"
-  }
-}
-```
-
----
-
-### 4. `POST /api/elections` (Admin Only)
-Creates an election with strict timestamp bounds.
-
-**Headers:** `Authorization: Bearer <ADMIN_JWT>`  
-**Request Payload:**
-```json
-{
-  "title": "National Parliamentary Election 2026",
-  "description": "General parliamentary election for federal legislative representatives.",
-  "registrationStart": "2026-10-01T08:00:00",
-  "registrationEnd": "2026-10-10T20:00:00",
-  "votingStart": "2026-10-11T08:00:00",
-  "votingEnd": "2026-10-20T20:00:00"
-}
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Election created successfully",
-  "data": {
-    "id": "E1",
-    "title": "National Parliamentary Election 2026",
-    "description": "General parliamentary election for federal legislative representatives.",
-    "registrationStart": "2026-10-01T08:00:00",
-    "registrationEnd": "2026-10-10T20:00:00",
-    "votingStart": "2026-10-11T08:00:00",
-    "votingEnd": "2026-10-20T20:00:00",
-    "resultsPublished": false,
-    "createdAt": "2026-10-13T14:40:00",
-    "status": "REGISTRATION_OPEN",
-    "candidateCount": 0,
-    "totalVotes": 0
-  }
-}
-```
-
----
-
-### 5. `POST /api/candidates/register-for-election` (Candidate Only)
-Enrolls candidate into an election with a policy manifesto during `REGISTRATION_OPEN`.
-
+### 3. `POST /api/payment/create-order` — Create Razorpay Order
 **Headers:** `Authorization: Bearer <CANDIDATE_JWT>`  
 **Request Payload:**
 ```json
 {
-  "electionId": "E1",
-  "manifestoTitle": "Transparency & Clean Energy",
-  "visionStatement": "Modernizing civic technology and subsidizing rooftop solar.",
-  "keyPromises": [
-    "Zero-emission public buses",
-    "Open municipal budget ledger",
-    "High-speed fiber for rural schools"
-  ]
+  "electionId": "E4",
+  "amount": 10000
 }
 ```
-
 **Response (200 OK):**
 ```json
 {
   "success": true,
-  "message": "Registered for election successfully",
+  "message": "Razorpay order created successfully",
   "data": {
-    "id": "CR-1728892800000-842",
-    "candidateId": "C1",
-    "electionId": "E1",
-    "manifestoTitle": "Transparency & Clean Energy",
-    "registeredAt": "2026-10-13T14:45:00"
+    "orderId": "order_TuHvdI512HLFwM",
+    "amount": 10000,
+    "currency": "INR",
+    "keyId": "rzp_test_TuHZ9A0hAgLC6b",
+    "electionId": "E4",
+    "electionTitle": "National Youth Parliamentary Council Election 2026",
+    "candidateId": "C2",
+    "candidateName": "Aruna",
+    "candidateEmail": "aruna@gmail.com"
   }
 }
 ```
 
----
+### 4. `POST /api/payment/verify` — Verify Payment Signature
+**Headers:** `Authorization: Bearer <CANDIDATE_JWT>`  
+**Request Payload:**
+```json
+{
+  "orderId": "order_TuHvdI512HLFwM",
+  "paymentId": "pay_TuHxAbc1234567",
+  "signature": "9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e..."
+}
+```
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Payment verified successfully",
+  "data": true
+}
+```
 
-### 6. `POST /api/votes/cast` (Voter Only)
-Casts atomic vote during `VOTING_OPEN`.
+### 5. `POST /api/candidates/register-for-election` — Candidate Nomination
+**Headers:** `Authorization: Bearer <CANDIDATE_JWT>`  
+**Request Payload:**
+```json
+{
+  "electionId": "E4",
+  "manifestoTitle": "Empowering Future Innovators",
+  "visionStatement": "Fostering STEM education and public digital governance.",
+  "keyPromises": [
+    "Subsidized high-speed internet for students",
+    "Annual student innovation grants",
+    "Open municipal youth council seats"
+  ],
+  "razorpayPaymentId": "pay_TuHxAbc1234567",
+  "razorpayOrderId": "order_TuHvdI512HLFwM",
+  "paymentAmount": 100.0
+}
+```
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Candidate nomination confirmed successfully",
+  "data": {
+    "id": "CR-1730335200000-482",
+    "candidateId": "C2",
+    "electionId": "E4",
+    "manifestoTitle": "Empowering Future Innovators",
+    "paymentId": "pay_TuHxAbc1234567",
+    "paymentStatus": "PAID",
+    "paymentAmount": 100.0,
+    "paidAt": "2026-10-31T04:11:36"
+  }
+}
+```
 
+### 6. `POST /api/votes/cast` — Cast Single Atomic Ballot
 **Headers:** `Authorization: Bearer <VOTER_JWT>`  
 **Request Payload:**
 ```json
 {
-  "electionId": "E1",
-  "candidateId": "C1"
+  "electionId": "E4",
+  "candidateId": "C2"
 }
 ```
-
 **Response (200 OK):**
 ```json
 {
   "success": true,
   "message": "Vote cast successfully",
   "data": {
-    "id": "VOTE-1728893100000-519",
-    "electionId": "E1",
+    "id": "VOTE-1730335800000-912",
+    "electionId": "E4",
     "voterId": "V1",
-    "candidateId": "C1",
-    "votedAt": "2026-10-13T14:50:00"
+    "candidateId": "C2",
+    "votedAt": "2026-10-31T04:20:00"
   }
 }
 ```
-
-**Duplicate Vote Rejection (400 Bad Request):**
+**Duplicate Ballot Attempt (400 Bad Request):**
 ```json
 {
   "success": false,
@@ -588,110 +585,157 @@ Casts atomic vote during `VOTING_OPEN`.
 
 ---
 
-### 7. `GET /api/votes/results/{electionId}`
-Returns aggregated, certified results breakdown.
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Election results retrieved",
-  "data": {
-    "electionId": "E1",
-    "electionTitle": "National Parliamentary Election 2026",
-    "resultsPublished": true,
-    "totalVotes": 1420,
-    "results": [
-      {
-        "candidateId": "C1",
-        "candidateName": "Jane Citizen",
-        "votes": 852,
-        "percentage": 60.0
-      },
-      {
-        "candidateId": "C2",
-        "candidateName": "Bob Smith",
-        "votes": 568,
-        "percentage": 40.0
-      }
-    ]
-  }
-}
-```
-
----
-
-## 9. Frontend Engineering & Reactive State Architecture
+## 11. Frontend Engineering, SPA Refresh Guard & Reactive State
 
 ```
 frontend/src/
 ├── components/
-│   ├── common/             # Atomic UI Components (Badge, Modal, StatCard)
-│   ├── layouts/            # Role-Specific Shells (AdminLayout, CandidateLayout, VoterLayout, PublicLayout)
-│   └── routes/             # Route Protectors (ProtectedRoute with RBAC redirection)
+│   ├── common/             # Atomic Components (Button, Modal, Badge, StatCard)
+│   ├── layouts/            # Layout Shells (AdminLayout, CandidateLayout, VoterLayout, PublicLayout)
+│   └── routes/             # Route Protectors (RoleProtectedRoute, RouteGuard)
 ├── pages/
 │   ├── admin/              # AdminDashboard, AdminElections, ViewCandidates, ViewVoters, AdminAuditLogs, AdminResults
 │   ├── candidate/          # CandidateProfile, CandidateElections, CandidateElectionDetail, CandidateResults
 │   ├── voter/              # VoterProfile, VoterElections, VoterVotePage, VoterResults
 │   └── public/             # HomePage, LoginPage, RegisterPage, PublicElectionsPage
-├── schemas/                # Zod Runtime Validation (voterRegistrationSchema, loginSchema)
-├── services/               # Enterprise Axios REST Client (JWT Interceptors)
-├── stores/                 # Zustand Persistent State Stores
-│   ├── authStore.ts        # Active Session, Token, User Metadata
-│   ├── electionStore.ts    # Election Roster, Dynamic Status Calculators
-│   ├── candidateStore.ts   # Candidate Profiles & Manifesto Cache
+├── schemas/                # Zod Form Validation Schemas
+├── services/               # Axios REST API Client with JWT Bearer Interceptors
+├── stores/                 # Zustand Stores with Persistent LocalStorage Hydration
+│   ├── authStore.ts        # Active Session, Token, User Role & Profile
+│   ├── electionStore.ts    # Elections Roster & Temporal Status Computations
+│   ├── candidateStore.ts   # Candidate Profiles & Nomination Manifestos
 │   ├── voteStore.ts        # Balloting Execution & Results Compiler
 │   ├── voterStore.ts       # Citizen Directory Cache
-│   └── auditStore.ts       # Audit Log Trail
-└── styles/                 # Enterprise CSS Layout System & Theming
+│   └── auditStore.ts       # Audit Log Ledger
+└── styles/                 # Enterprise CSS Design System & Hover Transitions
 ```
+
+### Bulletproof SPA Refresh Architecture:
+When a user refreshes any URL in the application:
+1. **Zustand Persistence**: Restores authentication token and user role synchronously before initial route evaluation.
+2. **RoleProtectedRoute**: Verifies permissions against the hydrated role without prematurely triggering redirects.
+3. **URL Preservation**: The active pathname (`/candidate/elections/E1`, `/admin/audit-logs`) is preserved identically.
+4. **Render SPA Rewrite Rule**: The static web server rewrites all requests (`/*` ➔ `/index.html`), preventing HTTP 404 errors on deep routes.
 
 ---
 
-## 10. Audit Logging & Compliance Ledger
+## 12. Audit Logging & Compliance Ledger
 
 Every security-sensitive state mutation is recorded in the PostgreSQL `audit_logs` table:
 
 ```mermaid
 sequenceDiagram
-    actor Voter as Voter (V1)
-    participant Ctrl as VoteController
-    participant Svc as VoteService
+    actor Actor as User / Actor
+    participant Controller as REST Controller
+    participant Service as Business Service
     participant Audit as AuditService
-    participant DB as PostgreSQL (voting_db)
+    participant DB as PostgreSQL
 
-    Voter->>Ctrl: POST /api/votes/cast (Bearer JWT)
-    Ctrl->>Svc: castVote(voterId, electionId, candidateId)
-    Svc->>DB: Check !hasVoted(V1, E1)
-    DB-->>Svc: OK (Not voted yet)
-    Svc->>DB: INSERT INTO votes (V1, E1, C1)
-    DB-->>Svc: Saved (VOTE-UUID)
-    Svc->>Audit: log("V1", "VOTER", "Cast Vote", "V1 cast vote in election E1")
-    Audit->>DB: INSERT INTO audit_logs
-    Svc-->>Ctrl: Vote Object
-    Ctrl-->>Voter: HTTP 200 OK (Ballot Certified)
+    Actor->>Controller: Sensitive Request (e.g. Cast Vote / Payment / Election Creation)
+    Controller->>Service: Execute Business Logic
+    Service->>DB: Perform Relational Mutations
+    Service->>Audit: log(userId, role, action, details)
+    Audit->>DB: INSERT INTO audit_logs (timestamp, userId, role, action, details)
+    Service-->>Controller: Operation Success
+    Controller-->>Actor: Return Verified Response
 ```
 
-### Audited Lifecycle Actions:
-1. **`Registration`**: Enrolled Voter ID and timestamp.
-2. **`Candidate Account Created`**: Elevation of voter identity to candidate ID.
-3. **`Login`**: Successful authentication for Admin, Voter, or Candidate.
-4. **`Create Election`**: Scheduling of election by Administrator.
-5. **`Election Registration`**: Candidate manifesto submission.
-6. **`Cast Vote`**: Anonymous ballot record timestamped without exposing vote in plaintext audit logs.
-7. **`Publish Results`**: Official release of verified tallies.
+### Audited Actions:
+- `Registration`: Enrolled Voter ID and timestamp.
+- `Candidate Account Created`: Elevation of voter identity to candidate ID.
+- `Login`: Successful authentication for Admin, Voter, or Candidate.
+- `Create Election`: Scheduling of election by Administrator.
+- `Election Registration & Payment`: Candidate nomination with Razorpay Payment ID proof.
+- `Cast Vote`: Anonymous ballot timestamped without exposing vote candidate in plaintext audit logs.
+- `Publish Results`: Official certification of verified tallies.
 
 ---
 
-## 11. Build, Quality Assurance & Verification Metrics
+## 13. Docker Multi-Stage Build & Containerization
 
+The project includes an optimized multi-stage `Dockerfile`:
+
+```dockerfile
+# Multi-stage build for Spring Boot with Java 21
+FROM maven:3.9.6-eclipse-temurin-21 AS build
+WORKDIR /app
+
+# Copy backend pom and resolve dependencies
+COPY backend/pom.xml ./pom.xml
+RUN mvn dependency:go-offline -B
+
+# Copy backend source and package
+COPY backend/src ./src
+RUN mvn clean package -DskipTests
+
+# Lightweight runtime stage
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+COPY --from=build /app/target/*.jar app.jar
+
+EXPOSE 8080
+ENV PORT=8080
+
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+```
+
+### Container Advantages:
+- **Build Isolation**: Dependencies resolved inside Maven container without requiring local Java installation.
+- **Minimal Attack Surface**: Production runtime uses `eclipse-temurin:21-jre-jammy`, discarding build tools and source code.
+- **Port Adaptability**: Automatically binds to `$PORT` provided by cloud hosts like Render.
+
+---
+
+## 14. Render Cloud Deployment Architecture
+
+```
+                    ┌───────────────────────────────────────────────┐
+                    │               CLIENT BROWSER                  │
+                    └───────────────────────┬───────────────────────┘
+                                            │
+                     ┌──────────────────────┴──────────────────────┐
+                     │                                             │
+                     ▼                                             ▼
+       ┌───────────────────────────┐                 ┌───────────────────────────┐
+       │   Render Static Site      │                 │   Render Web Service      │
+       │   (React 19 Frontend)     │                 │   (Spring Boot Docker)    │
+       │   securevote-frontend     │                 │   securevote-backend      │
+       │   - CDN Distributed       │                 │   - Java 21 Runtime       │
+       │   - Rewrite: /* -> index  │                 │   - Port: Auto ($PORT)    │
+       └───────────────────────────┘                 └─────────────┬─────────────┘
+                                                                   │
+                                                                   ▼
+                                                     ┌───────────────────────────┐
+                                                     │   Render Managed Postgres │
+                                                     │   voting-db (PostgreSQL)  │
+                                                     │   - Internal Network      │
+                                                     │   - Port: 5432            │
+                                                     └───────────────────────────┘
+```
+
+### Environment Variables Matrix for Render:
+
+| Variable | Target Service | Value / Description |
+|---|---|---|
+| `SPRING_DATASOURCE_URL` | Web Service | `jdbc:postgresql://<internal-host>:5432/<db_name>` |
+| `SPRING_DATASOURCE_USERNAME` | Web Service | `<db_username>` |
+| `SPRING_DATASOURCE_PASSWORD` | Web Service | `<db_password>` |
+| `RAZORPAY_KEY_ID` | Web Service | Razorpay Test API Key ID |
+| `RAZORPAY_KEY_SECRET` | Web Service | Razorpay Test API Secret |
+| `VITE_API_BASE_URL` | Static Site | `https://securevote-onlinevotingsystem-backend.onrender.com/api` |
+
+---
+
+## 15. Automated Quality Verification & Postman Test Harness
+
+### 1. Build Verification Metrics:
 ```
 +---------------------------------------------------------------------------------------+
 |                              VERIFICATION AUDIT REPORT                                |
 +-----------------------+-----------------------------+---------------------------------+
 | Test Suite / Tool     | Target                      | Result Metric                   |
 +-----------------------+-----------------------------+---------------------------------+
-| Java Compiler (javac) | 40 Spring Boot Classes      | BUILD SUCCESS (0 Errors)        |
+| Java Compiler (javac) | 45 Spring Boot Classes      | BUILD SUCCESS (0 Errors)        |
 | JUnit 5 / Spring Test | OnlineVotingSystemAppTests  | Tests run: 1, Failures: 0       |
 | TypeScript Compiler   | frontend/src (React 19)     | Clean compilation (0 Errors)    |
 | Static Linter (oxlint)| 42 Frontend source files    | 0 Errors, 0 Warnings            |
@@ -699,85 +743,43 @@ sequenceDiagram
 +-----------------------+-----------------------------+---------------------------------+
 ```
 
----
-
-## 12. Postman Automated Test Harness
-
-The project root includes [`OnlineVotingSystem_Postman_Collection.json`](./OnlineVotingSystem_Postman_Collection.json) containing **17 modular test scenarios**:
-
-```
-📁 Online Voting System API
-├── 📂 1. Authentication & Registration
-│   ├── Admin Login ──► [Test Script auto-stores pm.collectionVariables.set('adminToken')]
-│   ├── Register Voter ──► [Test Script auto-stores 'voterToken' & 'voterId']
-│   ├── Voter Login
-│   ├── Register Candidate ──► [Test Script auto-stores 'candidateToken' & 'candidateId']
-│   └── Candidate Login
-├── 📂 2. Election Management
-│   ├── Get All Elections (Public)
-│   ├── Get Election by ID
-│   ├── Create Election (Admin)
-│   └── Publish Election Results (Admin)
-├── 📂 3. Candidate Operations
-│   ├── Register for Election with Manifesto (Candidate)
-│   ├── Get Candidates for Election
-│   └── Get All Candidates (Admin)
-├── 📂 4. Voting & Results
-│   ├── Cast Vote (Voter)
-│   ├── Check If Voter Has Voted (Voter)
-│   └── Get Election Results (Tallies & Percentages)
-└── 📂 5. Voters & Audit Trail
-    ├── Get All Voters (Admin)
-    ├── Get User Profile (Authenticated)
-    └── Get Audit Logs (Admin)
-```
+### 2. Postman Automated Collection:
+The project root includes [`OnlineVotingSystem_Postman_Collection.json`](./OnlineVotingSystem_Postman_Collection.json) with pre-configured tests that automatically capture JWT tokens across all personas.
 
 ---
 
-## 13. Step-by-Step Production & Developer Run Guide
+## 16. Developer Quick Start & Production Runbook
 
-### 1. Database Initialization
-Verify PostgreSQL 16+ is running on localhost port 5432:
-```sql
-CREATE DATABASE voting_db;
-```
-*(Default settings connect via `postgres` user with password `root`)*
+### Local Development:
+```bash
+# 1. Clone the repository
+git clone https://github.com/chintadavasudharini/OnlineVotingSystem.git
+cd OnlineVotingSystem
 
-### 2. Launch Backend Server (Port: 8080)
-From project root:
-```bash
-npm run dev:backend
-```
-*Or directly in backend directory:*
-```bash
+# 2. Run backend (Spring Boot)
 cd backend
-.\mvnw.cmd spring-boot:run     # Windows
-# ./mvnw spring-boot:run       # Linux / macOS
-```
-> Boots at: **`http://localhost:8080`**  
-> Automatically creates tables and seeds default Super Admin: `admin` / `admin`.
+.\mvnw.cmd spring-boot:run
 
-### 3. Launch Frontend Client (Port: 5174)
-From project root:
-```bash
+# 3. In a separate terminal, run frontend (React + Vite)
+cd ../frontend
 npm run dev
 ```
-> Available at: **`http://localhost:5174`**
 
-### 4. Build Full Stack for Production
-```bash
-npm run build
-```
-Executes `tsc -b && vite build` for frontend assets and `mvn clean package -DskipTests` for Spring Boot executable JAR.
+### Default Credentials:
+- **Super Administrator**: `admin` / `admin`
+- **Voter**: Register at `/register` ($\ge 18$ yrs)
+- **Candidate**: Elevate from Voter Profile ($\ge 25$ yrs)
 
 ---
 
-## 14. Repository & Project Attribution
+## 17. Attribution, Repository & Licensing
 
-- **Lead Developer & Architect:** [Chintada Vasudharini](https://github.com/chintadavasudharini)
-- **GitHub Repository:** [https://github.com/chintadavasudharini/OnlineVotingSystem](https://github.com/chintadavasudharini/OnlineVotingSystem)
-- **License:** Released under the **MIT License**.
+Developed with ❤️ by **[Chintada Vasudharini](https://github.com/chintadavasudharini)**.
+
+- **GitHub Repository**: [https://github.com/chintadavasudharini/OnlineVotingSystem](https://github.com/chintadavasudharini/OnlineVotingSystem)
+- **LinkedIn Publication**: [Online Voting System — Enterprise Architecture & System Invariants](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/)
+- **License**: Released under the **MIT License**.
 
 <div align="center">
-  <sub>Designed for democratic integrity, cryptographic non-repudiation, and architectural excellence.</sub>
+  <sub>Built for democratic transparency, cryptographic non-repudiation, and institutional trust.</sub>
 </div>

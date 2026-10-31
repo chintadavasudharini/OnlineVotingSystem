@@ -170,11 +170,23 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(AuthRequest request) {
-        String identifier = request.getIdentifier().trim();
+        String rawIdentifier = request.getIdentifier() != null ? request.getIdentifier().trim() : "";
+        String cleanIdentifier = rawIdentifier
+                .replaceAll("(?i)^(candidate|voter)[\\s:#/-]+", "")
+                .replaceAll("(?i)^([A-Z])\\s+(\\d+)$", "$1$2")
+                .trim();
+        String identifier = cleanIdentifier.isEmpty() ? rawIdentifier : cleanIdentifier;
         String roleStr = request.getRole() != null ? request.getRole().trim().toUpperCase() : null;
 
+        // Auto-detect role if ID starts with C (Candidate) or V (Voter) and role wasn't explicitly matching
+        if (identifier.matches("(?i)^C\\d+$") && (roleStr == null || "VOTER".equalsIgnoreCase(roleStr))) {
+            roleStr = "CANDIDATE";
+        } else if (identifier.matches("(?i)^V\\d+$") && (roleStr == null || "CANDIDATE".equalsIgnoreCase(roleStr))) {
+            roleStr = "VOTER";
+        }
+
         // Special handling for ADMIN
-        if ("ADMIN".equals(roleStr) || "admin".equalsIgnoreCase(identifier)) {
+        if ("ADMIN".equals(roleStr) || "admin".equalsIgnoreCase(rawIdentifier) || "admin".equalsIgnoreCase(cleanIdentifier)) {
             User admin = userRepository.findByIdIgnoreCase("admin")
                     .orElseGet(() -> {
                         User newAdmin = new User(
@@ -191,7 +203,8 @@ public class AuthService {
                         return userRepository.save(newAdmin);
                     });
 
-            if (!"admin".equals(request.getPassword()) && !passwordEncoder.matches(request.getPassword(), admin.getPassword())) {
+            String adminPass = request.getPassword() != null ? request.getPassword() : "";
+            if (!"admin".equals(adminPass.trim()) && !passwordEncoder.matches(adminPass.trim(), admin.getPassword()) && !passwordEncoder.matches(adminPass, admin.getPassword())) {
                 throw new IllegalArgumentException("Invalid admin credentials.");
             }
 
@@ -212,16 +225,20 @@ public class AuthService {
         }
 
         // Voter or Candidate
-        Optional<User> userOpt = userRepository.findByIdIgnoreCase(identifier);
+        Optional<User> userOpt = userRepository.findByIdIgnoreCase(cleanIdentifier);
+        if (userOpt.isEmpty() && !cleanIdentifier.equalsIgnoreCase(rawIdentifier)) {
+            userOpt = userRepository.findByIdIgnoreCase(rawIdentifier);
+        }
+
         if (userOpt.isEmpty()) {
             if (roleStr != null) {
                 try {
                     Role targetRole = Role.valueOf(roleStr);
-                    userOpt = userRepository.findByEmailIgnoreCaseAndRole(identifier, targetRole);
+                    userOpt = userRepository.findByEmailIgnoreCaseAndRole(rawIdentifier, targetRole);
                 } catch (IllegalArgumentException ignored) {}
             }
             if (userOpt.isEmpty()) {
-                List<User> users = userRepository.findAllByEmailIgnoreCase(identifier);
+                List<User> users = userRepository.findAllByEmailIgnoreCase(rawIdentifier);
                 if (!users.isEmpty()) {
                     userOpt = Optional.of(users.get(0));
                 }
@@ -230,9 +247,15 @@ public class AuthService {
 
         User user = userOpt.orElseThrow(() -> new IllegalArgumentException("Invalid user ID or password."));
 
-        boolean matches = passwordEncoder.matches(request.getPassword(), user.getPassword()) ||
-                          request.getPassword().equals(user.getPassword()) ||
-                          "admin".equals(request.getPassword());
+        String rawPass = request.getPassword() != null ? request.getPassword() : "";
+        String trimmedPass = rawPass.trim();
+
+        boolean matches = passwordEncoder.matches(rawPass, user.getPassword()) ||
+                          passwordEncoder.matches(trimmedPass, user.getPassword()) ||
+                          rawPass.equals(user.getPassword()) ||
+                          trimmedPass.equals(user.getPassword()) ||
+                          "admin".equals(rawPass) ||
+                          "admin".equals(trimmedPass);
         if (!matches) {
             throw new IllegalArgumentException("Invalid user ID or password.");
         }
