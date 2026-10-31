@@ -9,8 +9,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20%7C%2018-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-Multi--Stage-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Vercel](https://img.shields.io/badge/Vercel-Frontend%20Live-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://securevote-onlinevotingsystem.vercel.app/)
 [![Razorpay](https://img.shields.io/badge/Razorpay-Payment%20Gateway-02042B?style=for-the-badge&logo=razorpay&logoColor=0C2340)](https://razorpay.com/)
-[![Render](https://img.shields.io/badge/Render-Cloud%20Deployment-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://render.com/)
+[![Render](https://img.shields.io/badge/Render-Backend%20Live-46E3B7?style=for-the-badge&logo=render&logoColor=white)](https://securevote-onlinevotingsystem-backend.onrender.com)
 [![Spring Security](https://img.shields.io/badge/Security-Spring%20Security%206-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)](https://spring.io/projects/spring-security)
 [![JWT](https://img.shields.io/badge/Auth-Stateless%20JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 [![Vite](https://img.shields.io/badge/Bundler-Vite%208-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
@@ -19,7 +20,8 @@
   A high-integrity, multi-tenant digital balloting and election governance system designed to eliminate voter fraud, prevent double-voting via composite transactional constraints, enforce temporal state-machine election lifecycles, verify candidate nomination security deposits via Razorpay, and maintain an immutable cryptographic audit ledger for certified results.
 </p>
 
-[🌐 Live API Status](https://securevote-onlinevotingsystem-backend.onrender.com) •
+[🚀 Live Web Application (Vercel)](https://securevote-onlinevotingsystem.vercel.app/) •
+[🌐 Live Backend API (Render)](https://securevote-onlinevotingsystem-backend.onrender.com) •
 [Explore Repository](https://github.com/chintadavasudharini/OnlineVotingSystem) •
 [📖 Deep-Dive Technical Dossier](PROJECT_DETAILS.md) •
 [📰 LinkedIn Article](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/) •

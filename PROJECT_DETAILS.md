@@ -5,7 +5,8 @@
 **Document Version:** `2.0.0-ENTERPRISE-RELEASE` | **Status:** `Production Deployed` | **Engineering Tier:** `Enterprise / Senior Staff`  
 **Author & Lead Architect:** [Chintada Vasudharini](https://github.com/chintadavasudharini)  
 **Repository:** [https://github.com/chintadavasudharini/OnlineVotingSystem](https://github.com/chintadavasudharini/OnlineVotingSystem) | **LinkedIn Publication:** [Read Article](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/)  
-**Live Production API:** [https://securevote-onlinevotingsystem-backend.onrender.com](https://securevote-onlinevotingsystem-backend.onrender.com)
+**Live Web Application (Vercel):** [https://securevote-onlinevotingsystem.vercel.app/](https://securevote-onlinevotingsystem.vercel.app/)  
+**Live Production API (Render):** [https://securevote-onlinevotingsystem-backend.onrender.com](https://securevote-onlinevotingsystem-backend.onrender.com)
 
 [![Java 21](https://img.shields.io/badge/Language-Java%2021%20LTS-007396?style=flat-square&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
 [![Spring Boot 3.3.4](https://img.shields.io/badge/Framework-Spring%20Boot%203.3.4-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -13,8 +14,9 @@
 [![TypeScript 5](https://img.shields.io/badge/Typing-TypeScript%205-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![PostgreSQL 16/18](https://img.shields.io/badge/Database-PostgreSQL%2016%2F18-4169E1?style=flat-square&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Container-Docker%20Multi--Stage-2496ED?style=flat-square&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Vercel](https://img.shields.io/badge/Deployment-Vercel%20Live-000000?style=flat-square&logo=vercel&logoColor=white)](https://securevote-onlinevotingsystem.vercel.app/)
 [![Razorpay](https://img.shields.io/badge/Payments-Razorpay%20Gateway-02042B?style=flat-square&logo=razorpay&logoColor=0C2340)](https://razorpay.com/)
-[![Render](https://img.shields.io/badge/Cloud-Render.com-46E3B7?style=flat-square&logo=render&logoColor=white)](https://render.com/)
+[![Render](https://img.shields.io/badge/Cloud-Render.com-46E3B7?style=flat-square&logo=render&logoColor=white)](https://securevote-onlinevotingsystem-backend.onrender.com)
 [![Spring Security 6](https://img.shields.io/badge/Security-Spring%20Security%206-6DB33F?style=flat-square&logo=springsecurity&logoColor=white)](https://spring.io/projects/spring-security)
 [![JWT Stateless](https://img.shields.io/badge/Auth-HMAC--SHA256%20JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 [![Vite 8](https://img.shields.io/badge/Bundler-Vite%208-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
