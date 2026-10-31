@@ -15,6 +15,11 @@ interface ElectionState {
       'id' | 'resultsPublished' | 'createdAt' | 'eligibleVoterIds' | 'eligibleCandidateIds'
     >
   ) => Promise<{ success: boolean; election?: Election; error?: string }>;
+  updateElection: (
+    id: string,
+    data: Partial<Election>
+  ) => Promise<{ success: boolean; election?: Election; error?: string }>;
+  deleteElection: (id: string) => Promise<{ success: boolean; error?: string }>;
   publishResults: (electionId: string) => Promise<{ success: boolean; error?: string }>;
   getElectionById: (id: string) => Election | undefined;
   getElectionStatus: (election: Election, referenceTime?: Date) => ElectionStatus;
@@ -160,6 +165,91 @@ export const useElectionStore = create<ElectionState>()(
             success: false,
             error: err.response?.data?.message || err.message || 'Error publishing results.',
           };
+        }
+      },
+
+      updateElection: async (id: string, data: Partial<Election>) => {
+        try {
+          const payload = {
+            title: data.name,
+            description: data.description,
+            registrationStart: data.registrationStart?.includes('.')
+              ? data.registrationStart.split('.')[0]
+              : data.registrationStart?.replace('Z', ''),
+            registrationEnd: data.registrationEnd?.includes('.')
+              ? data.registrationEnd.split('.')[0]
+              : data.registrationEnd?.replace('Z', ''),
+            votingStart: data.votingStart?.includes('.')
+              ? data.votingStart.split('.')[0]
+              : data.votingStart?.replace('Z', ''),
+            votingEnd: data.votingEnd?.includes('.')
+              ? data.votingEnd.split('.')[0]
+              : data.votingEnd?.replace('Z', ''),
+          };
+
+          const response = await api.put(`/elections/${id}`, payload);
+
+          if (response.data && response.data.success) {
+            const e = response.data.data;
+            const updatedElection: Election = {
+              id: e.id,
+              name: e.title || data.name || '',
+              description: e.description,
+              registrationStart: e.registrationStart,
+              registrationEnd: e.registrationEnd,
+              votingStart: e.votingStart,
+              votingEnd: e.votingEnd,
+              resultsPublished: e.resultsPublished || false,
+              createdAt: e.createdAt,
+              eligibleVoterIds: [],
+              eligibleCandidateIds: [],
+              candidateCount: e.candidateCount ?? 0,
+              totalVotes: e.totalVotes ?? 0,
+              totalVoters: e.totalVoters ?? 0,
+            };
+
+            set((state) => ({
+              elections: state.elections.map((item) =>
+                item.id.toLowerCase() === id.toLowerCase() ? updatedElection : item
+              ),
+            }));
+
+            return { success: true, election: updatedElection };
+          } else {
+            return {
+              success: false,
+              error: response.data?.message || 'Failed to update election.',
+            };
+          }
+        } catch (err: any) {
+          const msg =
+            err.response?.data?.message ||
+            err.message ||
+            'Error updating election on backend.';
+          return { success: false, error: msg };
+        }
+      },
+
+      deleteElection: async (id: string) => {
+        try {
+          const response = await api.delete(`/elections/${id}`);
+          if (response.data && response.data.success) {
+            set((state) => ({
+              elections: state.elections.filter((item) => item.id.toLowerCase() !== id.toLowerCase()),
+            }));
+            return { success: true };
+          } else {
+            return {
+              success: false,
+              error: response.data?.message || 'Failed to delete election.',
+            };
+          }
+        } catch (err: any) {
+          const msg =
+            err.response?.data?.message ||
+            err.message ||
+            'Error deleting election on backend.';
+          return { success: false, error: msg };
         }
       },
     }),

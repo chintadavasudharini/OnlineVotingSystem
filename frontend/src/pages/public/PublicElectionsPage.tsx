@@ -188,7 +188,7 @@ export const PublicElectionsPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  ) : (
+                  ) : status === 'UPCOMING' && candidates.length === 0 ? null : (
                     <div style={{
                       padding: '0.85rem',
                       backgroundColor: '#f8fafc',

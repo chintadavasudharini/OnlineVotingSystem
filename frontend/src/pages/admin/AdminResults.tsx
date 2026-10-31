@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Trophy, CheckCircle2, Clock, Calculator, Send, BarChart3 } from 'lucide-react';
+import { Trophy, CheckCircle2, Clock, Calculator, Send, BarChart3, Users, UserCheck, Vote } from 'lucide-react';
 import { useElectionStore } from '../../stores/electionStore';
 import { useCandidateStore } from '../../stores/candidateStore';
+import { useVoterStore } from '../../stores/voterStore';
 import { useVoteStore } from '../../stores/voteStore';
 import { formatDateTime } from '../../utils/dateFormatter';
 import { Modal } from '../../components/common/Modal';
@@ -12,6 +13,7 @@ export const AdminResults: React.FC = () => {
   const elections = useElectionStore((state) => state.elections);
   const publishResults = useElectionStore((state) => state.publishResults);
   const candidates = useCandidateStore((state) => state.candidates);
+  const voters = useVoterStore((state) => state.voters);
   const getElectionResults = useVoteStore((state) => state.getElectionResults);
   const getVotesForElection = useVoteStore((state) => state.getVotesForElection);
 
@@ -34,6 +36,7 @@ export const AdminResults: React.FC = () => {
   React.useEffect(() => {
     useElectionStore.getState().fetchElections();
     useCandidateStore.getState().fetchCandidates();
+    useVoterStore.getState().fetchVoters();
   }, []);
 
   React.useEffect(() => {
@@ -160,54 +163,95 @@ export const AdminResults: React.FC = () => {
               <div className="card-body">
                 {(() => {
                   const votes = getVotesForElection(selectedElection.id);
-                  const isCalculated = calculatedMap[selectedElection.id] || selectedElection.resultsPublished;
+                  const isPublished = Boolean(selectedElection.resultsPublished);
+                  const isCalculated = calculatedMap[selectedElection.id] || isPublished;
                   const localRes = getElectionResults(selectedElection.id, candidates);
                   const results = (backendResults && backendResults.results.length > 0) ? backendResults.results : localRes.results;
-                  const totalVotesCount = backendResults ? backendResults.totalVotes : votes.length;
+                  const totalVotesCount = backendResults ? backendResults.totalVotes : (selectedElection.totalVotes ?? votes.length);
+                  const candidateCount = selectedElection.candidateCount ?? (results.length > 0 ? results.length : 0);
+                  const votersCount = (selectedElection.totalVoters && selectedElection.totalVoters > 0)
+                    ? selectedElection.totalVoters
+                    : (voters.length > 0 ? voters.length : 0);
 
                   return (
                     <div>
                       {/* Metric Banner */}
                       <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
                         gap: '1rem',
                         marginBottom: '1.5rem',
                         padding: '1.25rem',
                         backgroundColor: '#f8fafc',
                         borderRadius: '8px',
-                        border: '1px solid #e2e8f0'
+                        border: '1px solid #e2e8f0',
+                        alignItems: 'center'
                       }}>
+                        {/* 1. No. of Candidates */}
                         <div>
-                          <div style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>
-                            Total Ballots Cast
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <Users size={14} color="#64748b" />
+                            <span>No. of Candidates</span>
                           </div>
-                          <div style={{ fontSize: '1.6rem', fontWeight: 800, color: '#0f172a' }}>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginTop: '0.25rem' }}>
+                            {candidateCount}
+                          </div>
+                        </div>
+
+                        {/* 2. No. of Voters */}
+                        <div>
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <UserCheck size={14} color="#64748b" />
+                            <span>No. of Voters</span>
+                          </div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginTop: '0.25rem' }}>
+                            {votersCount}
+                          </div>
+                        </div>
+
+                        {/* 3. Total Ballots Cast */}
+                        <div>
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <Vote size={14} color="#64748b" />
+                            <span>Total Ballots Cast</span>
+                          </div>
+                          <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginTop: '0.25rem' }}>
                             {totalVotesCount.toLocaleString()}
                           </div>
                         </div>
 
+                        {/* 4. Results Status */}
                         <div>
-                          <div style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 700 }}>
                             Results Status
                           </div>
-                          <div style={{ fontSize: '1.15rem', fontWeight: 700, color: selectedElection.resultsPublished ? '#15803d' : '#ea580c', marginTop: '0.35rem' }}>
-                            {selectedElection.resultsPublished ? 'Published to Public' : 'NOT PUBLISHED'}
+                          <div style={{ fontSize: '1rem', fontWeight: 700, color: isPublished ? '#15803d' : '#ea580c', marginTop: '0.35rem' }}>
+                            {isPublished ? 'Published to Public' : 'NOT PUBLISHED'}
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem' }}>
+                        {/* 5 & 6. Action Buttons */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.65rem', flexWrap: 'wrap' }}>
                           <button
                             type="button"
                             onClick={() => handleCalculateResults(selectedElection.id)}
+                            disabled={isPublished}
                             className="btn btn-outline"
-                            style={{ fontWeight: 600 }}
+                            style={{
+                              fontWeight: 600,
+                              opacity: isPublished ? 0.55 : 1,
+                              cursor: isPublished ? 'not-allowed' : 'pointer',
+                              backgroundColor: isPublished ? '#f1f5f9' : '#ffffff',
+                              color: isPublished ? '#94a3b8' : undefined,
+                              border: isPublished ? '1px solid #cbd5e1' : undefined,
+                            }}
+                            title={isPublished ? 'Results have already been published.' : 'Calculate election results'}
                           >
                             <Calculator size={16} />
                             <span>Calculate Results</span>
                           </button>
 
-                          {!selectedElection.resultsPublished ? (
+                          {!isPublished ? (
                             <button
                               type="button"
                               onClick={() => setPublishModalElectionId(selectedElection.id)}
@@ -218,7 +262,20 @@ export const AdminResults: React.FC = () => {
                               <span>Publish Results</span>
                             </button>
                           ) : (
-                            <button disabled className="btn btn-outline" style={{ color: '#16a34a' }}>
+                            <button
+                              type="button"
+                              disabled
+                              className="btn btn-outline"
+                              style={{
+                                color: '#16a34a',
+                                backgroundColor: '#f0fdf4',
+                                borderColor: '#bbf7d0',
+                                opacity: 0.8,
+                                cursor: 'not-allowed',
+                                fontWeight: 600,
+                              }}
+                              title="Official results have already been published."
+                            >
                               <CheckCircle2 size={16} />
                               <span>Published</span>
                             </button>

@@ -127,6 +127,78 @@ public class ElectionService {
     }
 
     @Transactional
+    public ElectionResponse updateElection(String id, ElectionRequest request, String adminId) {
+        Election election = getElectionEntity(id);
+
+        String status = calculateElectionStatus(election);
+        if ("VOTING_OPEN".equals(status) || "COMPLETED".equals(status)) {
+            throw new IllegalArgumentException("This election cannot be edited or deleted because it is " +
+                    ("VOTING_OPEN".equals(status) ? "currently voting open." : "already completed."));
+        }
+
+        long voteCount = voteRepository.countByElectionId(id);
+        if (voteCount > 0) {
+            throw new IllegalArgumentException("This election cannot be edited or deleted because votes have already been cast.");
+        }
+
+        if (!request.getRegistrationEnd().isAfter(request.getRegistrationStart())) {
+            throw new IllegalArgumentException("Registration end time must be after registration start time.");
+        }
+        if (!request.getVotingStart().isAfter(request.getRegistrationEnd())) {
+            throw new IllegalArgumentException("Voting start time must be after registration end time.");
+        }
+        if (!request.getVotingEnd().isAfter(request.getVotingStart())) {
+            throw new IllegalArgumentException("Voting end time must be after voting start time.");
+        }
+
+        election.setTitle(request.getTitle().trim());
+        election.setDescription(request.getDescription() != null ? request.getDescription().trim() : "");
+        election.setRegistrationStart(request.getRegistrationStart());
+        election.setRegistrationEnd(request.getRegistrationEnd());
+        election.setVotingStart(request.getVotingStart());
+        election.setVotingEnd(request.getVotingEnd());
+
+        Election updated = electionRepository.save(election);
+
+        auditService.log(
+                adminId,
+                "ADMIN",
+                "Update Election",
+                "Updated election " + id + " (" + updated.getTitle() + ")"
+        );
+
+        return mapToResponse(updated);
+    }
+
+    @Transactional
+    public void deleteElection(String id, String adminId) {
+        Election election = getElectionEntity(id);
+
+        String status = calculateElectionStatus(election);
+        if ("VOTING_OPEN".equals(status) || "COMPLETED".equals(status)) {
+            throw new IllegalArgumentException("This election cannot be edited or deleted because it is " +
+                    ("VOTING_OPEN".equals(status) ? "currently voting open." : "already completed."));
+        }
+
+        long voteCount = voteRepository.countByElectionId(id);
+        if (voteCount > 0) {
+            throw new IllegalArgumentException("This election cannot be edited or deleted because votes have already been cast.");
+        }
+
+        // Clean up candidate registrations belonging to this election
+        candidateRegistrationRepository.deleteByElectionId(id);
+
+        electionRepository.delete(election);
+
+        auditService.log(
+                adminId,
+                "ADMIN",
+                "Delete Election",
+                "Deleted election " + id + " (" + election.getTitle() + ")"
+        );
+    }
+
+    @Transactional
     public ElectionResponse publishResults(String electionId, String adminId) {
         Election election = getElectionEntity(electionId);
         election.setResultsPublished(true);
@@ -154,7 +226,7 @@ public class ElectionService {
         response.setResultsPublished(election.isResultsPublished());
         response.setCreatedAt(election.getCreatedAt());
         response.setStatus(calculateElectionStatus(election));
-        response.setCandidateCount(candidateRegistrationRepository.findByElectionId(election.getId()).size());
+        response.setCandidateCount(candidateRegistrationRepository.countByElectionId(election.getId()));
         response.setTotalVotes(voteRepository.countByElectionId(election.getId()));
         response.setTotalVoters(userRepository.countByRole(Role.VOTER));
         return response;

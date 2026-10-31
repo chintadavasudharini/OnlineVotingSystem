@@ -42,6 +42,27 @@ public class ElectionController {
         return ResponseEntity.ok(ApiResponse.ok("Election created successfully", created));
     }
 
+    @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<ElectionResponse>> updateElection(
+            @PathVariable String id,
+            @Valid @RequestBody ElectionRequest request,
+            Authentication authentication) {
+        String adminId = authentication != null ? authentication.getName() : "admin";
+        ElectionResponse updated = electionService.updateElection(id, request, adminId);
+        return ResponseEntity.ok(ApiResponse.ok("Election updated successfully", updated));
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiResponse<Void>> deleteElection(
+            @PathVariable String id,
+            Authentication authentication) {
+        String adminId = authentication != null ? authentication.getName() : "admin";
+        electionService.deleteElection(id, adminId);
+        return ResponseEntity.ok(ApiResponse.ok("Election deleted successfully", null));
+    }
+
     @PostMapping("/{id}/publish-results")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiResponse<ElectionResponse>> publishResults(

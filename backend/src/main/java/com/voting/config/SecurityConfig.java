@@ -58,6 +58,8 @@ public class SecurityConfig {
                 // Admin specific endpoints
                 .requestMatchers("/api/admin/**", "/api/audit-logs/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/api/elections", "/api/elections/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/elections/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/elections/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/voters", "/api/candidates").hasRole("ADMIN")
                 // Candidate specific endpoints
                 .requestMatchers("/api/payment/**").hasRole("CANDIDATE")

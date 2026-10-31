@@ -12,6 +12,10 @@ public interface CandidateRegistrationRepository extends JpaRepository<Candidate
 
     List<CandidateRegistration> findByElectionId(String electionId);
 
+    long countByElectionId(String electionId);
+
+    void deleteByElectionId(String electionId);
+
     List<CandidateRegistration> findByCandidateId(String candidateId);
 
     Optional<CandidateRegistration> findByCandidateIdAndElectionId(String candidateId, String electionId);
