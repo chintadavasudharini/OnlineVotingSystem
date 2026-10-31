@@ -70,7 +70,7 @@ export const AdminElections: React.FC = () => {
     }
   };
 
-  // Helper to render Period in exact 2-line layout: "mon date, year," on line 1, "time am/pm" on line 2
+  // Helper to render Period in exact 2-line layout: "date mon year," on line 1, "time am/pm" on line 2
   const renderPeriodDateTime = (isoString?: string) => {
     if (!isoString) return <div style={{ color: '#94a3b8' }}>—</div>;
     try {
@@ -78,11 +78,10 @@ export const AdminElections: React.FC = () => {
       if (isNaN(d.getTime())) {
         return <div style={{ fontWeight: 600 }}>{isoString}</div>;
       }
-      const datePart = d.toLocaleDateString('en-US', {
-        month: 'short',
-        day: '2-digit',
-        year: 'numeric',
-      });
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = d.toLocaleDateString('en-US', { month: 'short' });
+      const year = d.getFullYear();
+      const datePart = `${day} ${month} ${year},`;
       const timePart = d.toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit',
@@ -90,7 +89,7 @@ export const AdminElections: React.FC = () => {
       });
       return (
         <div style={{ fontWeight: 600, lineHeight: 1.35 }}>
-          <div>{datePart},</div>
+          <div>{datePart}</div>
           <div>{timePart}</div>
         </div>
       );
