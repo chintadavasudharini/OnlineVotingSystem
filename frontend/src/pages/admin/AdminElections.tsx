@@ -18,7 +18,6 @@ import { Badge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
 import { electionCreationSchema } from '../../schemas/authSchemas';
 import type { ElectionCreationFormData } from '../../schemas/authSchemas';
-import { formatDateTime } from '../../utils/dateFormatter';
 import type { Election } from '../../types';
 
 export const AdminElections: React.FC = () => {
@@ -68,6 +67,35 @@ export const AdminElections: React.FC = () => {
       };
     } catch {
       return { date: '', time: '09:00' };
+    }
+  };
+
+  // Helper to render Period in exact 2-line layout: "mon date, year," on line 1, "time am/pm" on line 2
+  const renderPeriodDateTime = (isoString?: string) => {
+    if (!isoString) return <div style={{ color: '#94a3b8' }}>—</div>;
+    try {
+      const d = new Date(isoString);
+      if (isNaN(d.getTime())) {
+        return <div style={{ fontWeight: 600 }}>{isoString}</div>;
+      }
+      const datePart = d.toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+      });
+      const timePart = d.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+      return (
+        <div style={{ fontWeight: 600, lineHeight: 1.35 }}>
+          <div>{datePart},</div>
+          <div>{timePart}</div>
+        </div>
+      );
+    } catch {
+      return <div style={{ fontWeight: 600 }}>{isoString}</div>;
     }
   };
 
@@ -404,17 +432,17 @@ export const AdminElections: React.FC = () => {
                         </td>
 
                         {/* Registration Period */}
-                        <td style={{ fontSize: '0.825rem', color: '#334155' }}>
-                          <div style={{ fontWeight: 600 }}>{formatDateTime(election.registrationStart)}</div>
-                          <div style={{ color: '#94a3b8', margin: '0.1rem 0' }}>to</div>
-                          <div style={{ fontWeight: 600 }}>{formatDateTime(election.registrationEnd)}</div>
+                        <td style={{ fontSize: '0.825rem', color: '#334155', whiteSpace: 'nowrap' }}>
+                          {renderPeriodDateTime(election.registrationStart)}
+                          <div style={{ color: '#94a3b8', margin: '0.15rem 0' }}>to</div>
+                          {renderPeriodDateTime(election.registrationEnd)}
                         </td>
 
                         {/* Voting Period */}
-                        <td style={{ fontSize: '0.825rem', color: '#334155' }}>
-                          <div style={{ fontWeight: 600 }}>{formatDateTime(election.votingStart)}</div>
-                          <div style={{ color: '#94a3b8', margin: '0.1rem 0' }}>to</div>
-                          <div style={{ fontWeight: 600 }}>{formatDateTime(election.votingEnd)}</div>
+                        <td style={{ fontSize: '0.825rem', color: '#334155', whiteSpace: 'nowrap' }}>
+                          {renderPeriodDateTime(election.votingStart)}
+                          <div style={{ color: '#94a3b8', margin: '0.15rem 0' }}>to</div>
+                          {renderPeriodDateTime(election.votingEnd)}
                         </td>
 
                         {/* Status */}
