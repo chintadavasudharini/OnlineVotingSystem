@@ -166,7 +166,7 @@ export const PublicElectionsPage: React.FC = () => {
                         </div>
                       ) : (
                         <div style={{ color: '#64748b', fontStyle: 'italic' }}>
-                          No candidates participating.
+                          No candidates participated.
                         </div>
                       )}
 
@@ -188,7 +188,7 @@ export const PublicElectionsPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  ) : status === 'UPCOMING' && candidates.length === 0 ? null : (
+                  ) : (
                     <div style={{
                       padding: '0.85rem',
                       backgroundColor: '#f8fafc',
@@ -203,18 +203,39 @@ export const PublicElectionsPage: React.FC = () => {
                         Candidates Participating
                       </div>
 
-                      {candidates.length > 0 ? (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                          {candidates.map((c) => (
-                            <div key={c.candidateId} style={{ color: '#334155', fontWeight: 500 }}>
-                              {c.candidateId} - {c.name}
+                      {status === 'UPCOMING' ? (
+                        <div style={{ color: '#64748b', fontSize: '0.8rem', lineHeight: 1.45 }}>
+                          Candidate registration has not started yet. Interested candidates can register for this election after REGISTRATION OPEN.
+                        </div>
+                      ) : status === 'REGISTRATION_OPEN' ? (
+                        <div>
+                          <div style={{ color: '#475569', fontSize: '0.8rem', lineHeight: 1.45 }}>
+                            Candidate registration is now open. Eligible candidates interested in participating can register.
+                          </div>
+                          {candidates.length > 0 && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #cbd5e1' }}>
+                              {candidates.map((c) => (
+                                <div key={c.candidateId} style={{ color: '#334155', fontWeight: 500 }}>
+                                  {c.candidateId} - {c.name}
+                                </div>
+                              ))}
                             </div>
-                          ))}
+                          )}
                         </div>
                       ) : (
-                        <div style={{ color: '#64748b', fontStyle: 'italic' }}>
-                          No candidates participating.
-                        </div>
+                        candidates.length > 0 ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                            {candidates.map((c) => (
+                              <div key={c.candidateId} style={{ color: '#334155', fontWeight: 500 }}>
+                                {c.candidateId} - {c.name}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ color: '#64748b', fontStyle: 'italic' }}>
+                            No candidates participating.
+                          </div>
+                        )
                       )}
                     </div>
                   )}
