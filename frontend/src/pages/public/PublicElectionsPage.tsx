@@ -12,6 +12,7 @@ export const PublicElectionsPage: React.FC = () => {
   const elections = useElectionStore((state) => state.elections);
   const getElectionStatus = useElectionStore((state) => state.getElectionStatus);
   const [candidatesMap, setCandidatesMap] = React.useState<Record<string, Array<{ candidateId: string; name: string }>>>({});
+  const [resultsMap, setResultsMap] = React.useState<Record<string, any>>({});
 
   React.useEffect(() => {
     useElectionStore.getState().fetchElections();
@@ -20,39 +21,56 @@ export const PublicElectionsPage: React.FC = () => {
   React.useEffect(() => {
     if (elections.length === 0) return;
     let isMounted = true;
-    const fetchAllCandidates = async () => {
+    const fetchAllElectionData = async () => {
       try {
-        const results = await Promise.all(
+        const fetched = await Promise.all(
           elections.map(async (el) => {
+            let candidateList: Array<{ candidateId: string; name: string }> = [];
+            let resultData: any = null;
+
             try {
               const res = await api.get(`/candidates/election/${el.id}`);
               if (res.data && res.data.success && Array.isArray(res.data.data)) {
-                return {
-                  id: el.id,
-                  candidates: res.data.data.map((c: any) => ({
-                    candidateId: c.candidateId || c.id,
-                    name: c.name,
-                  })),
-                };
+                candidateList = res.data.data.map((c: any) => ({
+                  candidateId: c.candidateId || c.id,
+                  name: c.name,
+                }));
               }
             } catch (err) {
               console.error(`Error fetching candidates for ${el.id}:`, err);
             }
-            return { id: el.id, candidates: [] };
+
+            if (el.resultsPublished) {
+              try {
+                const resRes = await api.get(`/votes/results/${el.id}`);
+                if (resRes.data && resRes.data.success && resRes.data.data) {
+                  resultData = resRes.data.data;
+                }
+              } catch (err) {
+                console.error(`Error fetching results for ${el.id}:`, err);
+              }
+            }
+
+            return { id: el.id, candidates: candidateList, result: resultData };
           })
         );
         if (isMounted) {
-          const map: Record<string, Array<{ candidateId: string; name: string }>> = {};
-          results.forEach((item) => {
-            map[item.id] = item.candidates;
+          const cMap: Record<string, Array<{ candidateId: string; name: string }>> = {};
+          const rMap: Record<string, any> = {};
+          fetched.forEach((item) => {
+            cMap[item.id] = item.candidates;
+            if (item.result) {
+              rMap[item.id] = item.result;
+            }
           });
-          setCandidatesMap(map);
+          setCandidatesMap(cMap);
+          setResultsMap(rMap);
         }
       } catch (err) {
-        console.error('Error fetching candidates:', err);
+        console.error('Error fetching election board data:', err);
       }
     };
-    fetchAllCandidates();
+    fetchAllElectionData();
     return () => {
       isMounted = false;
     };
@@ -86,8 +104,26 @@ export const PublicElectionsPage: React.FC = () => {
         }}>
           {elections.map((election) => {
             const status = getElectionStatus(election, currentTime);
-            const isCompleted = status === 'COMPLETED';
-            const candidates = candidatesMap[election.id] || [];
+            const isCompleted = status === 'COMPLETED' || election.resultsPublished;
+            const fetchedCandidates = candidatesMap[election.id] || [];
+            const resultData = resultsMap[election.id];
+            const resultCandidates = resultData?.results || [];
+
+            const candidates: Array<{ candidateId: string; name: string }> = fetchedCandidates.length > 0
+              ? fetchedCandidates
+              : resultCandidates.map((r: any) => ({ candidateId: String(r.candidateId || ''), name: String(r.candidateName || '') }));
+
+            const topVoteCandidates = (() => {
+              if (!election.resultsPublished || resultCandidates.length === 0) return { winner: null, tied: [] };
+              const maxVotes = Math.max(...resultCandidates.map((r: any) => Number(r.votes) || 0));
+              const tied = resultCandidates.filter((r: any) => (Number(r.votes) || 0) === maxVotes);
+              if (tied.length === 1) {
+                return { winner: tied[0], tied: [] };
+              } else if (tied.length > 1) {
+                return { winner: null, tied };
+              }
+              return { winner: null, tied: [] };
+            })();
 
             return (
               <div key={election.id} className="election-card">
@@ -159,8 +195,9 @@ export const PublicElectionsPage: React.FC = () => {
                       {candidates.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                           {candidates.map((c) => (
-                            <div key={c.candidateId} style={{ color: '#334155', fontWeight: 500 }}>
-                              {c.candidateId} - {c.name}
+                            <div key={c.candidateId} style={{ color: '#334155', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                              <span style={{ color: '#64748b' }}>&bull;</span>
+                              <span>{c.candidateId} - {c.name}</span>
                             </div>
                           ))}
                         </div>
@@ -180,13 +217,61 @@ export const PublicElectionsPage: React.FC = () => {
                       }}>
                         <div style={{ color: '#0f172a' }}>
                           <span style={{ fontWeight: 700 }}>Total Voters:</span>{' '}
-                          <span style={{ fontWeight: 600 }}>{election.totalVoters ?? 0}</span>
+                          <span style={{ fontWeight: 600 }}>{(election.totalVoters ?? resultData?.totalVoters ?? 0).toLocaleString()}</span>
                         </div>
                         <div style={{ color: '#0f172a' }}>
                           <span style={{ fontWeight: 700 }}>Total Votes Cast:</span>{' '}
-                          <span style={{ fontWeight: 600 }}>{election.totalVotes ?? 0}</span>
+                          <span style={{ fontWeight: 600 }}>{((resultData?.totalVotes ?? election.totalVotes) ?? 0).toLocaleString()}</span>
                         </div>
                       </div>
+
+                      {/* Elected Candidate (Single Winner) */}
+                      {topVoteCandidates.winner && (
+                        <div style={{
+                          marginTop: '0.65rem',
+                          padding: '0.75rem 0.85rem',
+                          backgroundColor: '#f0fdf4',
+                          border: '1px solid #86efac',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.35rem',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#166534', fontWeight: 700, fontSize: '0.85rem' }}>
+                            <span style={{ fontSize: '1rem' }}>🟩</span>
+                            <span>Elected Candidate</span>
+                          </div>
+                          <div style={{ color: '#14532d', fontWeight: 800, fontSize: '0.95rem' }}>
+                            {topVoteCandidates.winner.candidateId} - {topVoteCandidates.winner.candidateName}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Result: Tie (Multiple Tied Candidates) */}
+                      {topVoteCandidates.tied.length > 1 && (
+                        <div style={{
+                          marginTop: '0.65rem',
+                          padding: '0.75rem 0.85rem',
+                          backgroundColor: '#fefce8',
+                          border: '1px solid #fde047',
+                          borderRadius: '8px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.45rem',
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#854d0e', fontWeight: 700, fontSize: '0.85rem' }}>
+                            <span style={{ fontSize: '1rem' }}>🟨</span>
+                            <span>Result: Tie</span>
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                            {topVoteCandidates.tied.map((c: any) => (
+                              <div key={c.candidateId} style={{ color: '#713f12', fontWeight: 700, fontSize: '0.85rem' }}>
+                                <span>{c.candidateId} - {c.candidateName} &rarr; {(Number(c.votes) || 0).toLocaleString()} votes</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div style={{

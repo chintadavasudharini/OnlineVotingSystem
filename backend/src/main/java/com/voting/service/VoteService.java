@@ -113,11 +113,14 @@ public class VoteService {
         // Sort descending by vote count
         candidateResults.sort(Comparator.comparingLong(CandidateResultDto::getVotes).reversed());
 
+        long totalVoters = userRepository.countByRole(com.voting.entity.Role.VOTER);
+
         return new ElectionResultResponse(
                 election.getId(),
                 election.getTitle(),
                 election.isResultsPublished(),
                 totalVotes,
+                totalVoters,
                 candidateResults
         );
     }
