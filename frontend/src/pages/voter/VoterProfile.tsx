@@ -89,6 +89,23 @@ export const VoterProfile: React.FC = () => {
               />
             </div>
 
+            {/* Gender */}
+            {currentUser?.gender && (
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <UserCheck size={16} color="#15803d" />
+                  <span>Gender</span>
+                </label>
+                <input
+                  type="text"
+                  readOnly
+                  value={currentUser.gender}
+                  className="form-input"
+                  style={{ backgroundColor: '#f8fafc' }}
+                />
+              </div>
+            )}
+
             {/* Age */}
             <div className="form-group" style={{ marginBottom: 0 }}>
               <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>

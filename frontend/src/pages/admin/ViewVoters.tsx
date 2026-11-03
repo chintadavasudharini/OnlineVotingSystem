@@ -52,6 +52,7 @@ export const ViewVoters: React.FC = () => {
                 <th>V.ID</th>
                 <th>Name</th>
                 <th>Date of Birth</th>
+                <th>Gender</th>
                 <th>Age</th>
                 <th>Email</th>
               </tr>
@@ -59,7 +60,7 @@ export const ViewVoters: React.FC = () => {
             <tbody>
               {filteredVoters.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>
+                  <td colSpan={6} style={{ textAlign: 'center', color: '#64748b', padding: '2rem' }}>
                     No voters found matching your search.
                   </td>
                 </tr>
@@ -69,6 +70,7 @@ export const ViewVoters: React.FC = () => {
                     <td style={{ fontWeight: 700, color: '#15803d' }}>{voter.id}</td>
                     <td style={{ fontWeight: 600 }}>{voter.name}</td>
                     <td>{formatDob(voter.dob)}</td>
+                    <td>{voter.gender || '—'}</td>
                     <td>{voter.age}</td>
                     <td style={{ color: '#475569' }}>{voter.email}</td>
                   </tr>

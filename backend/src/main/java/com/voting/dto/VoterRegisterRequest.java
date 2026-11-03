@@ -17,6 +17,8 @@ public class VoterRegisterRequest {
 
     private LocalDate dob;
 
+    private String gender;
+
     @Min(value = 18, message = "Voter must be at least 18 years old")
     private int age;
 
@@ -48,6 +50,14 @@ public class VoterRegisterRequest {
 
     public void setDob(LocalDate dob) {
         this.dob = dob;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     public int getAge() {

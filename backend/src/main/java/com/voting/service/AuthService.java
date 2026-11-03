@@ -80,6 +80,7 @@ public class AuthService {
                 request.getName().trim(),
                 request.getEmail().trim().toLowerCase(),
                 request.getDob(),
+                request.getGender() != null ? request.getGender().trim() : null,
                 request.getAge(),
                 encodedPassword,
                 Role.VOTER,
@@ -106,6 +107,7 @@ public class AuthService {
                 voter.getRole(),
                 voter.getAge(),
                 voter.getDob(),
+                voter.getGender(),
                 null,
                 voter.getStatus()
         );
@@ -137,6 +139,7 @@ public class AuthService {
                 voter.getName(),
                 voter.getEmail(),
                 voter.getDob(),
+                voter.getGender(),
                 voter.getAge(),
                 encodedPassword,
                 Role.CANDIDATE,
@@ -163,6 +166,7 @@ public class AuthService {
                 candidate.getRole(),
                 candidate.getAge(),
                 candidate.getDob(),
+                candidate.getGender(),
                 candidate.getVoterId(),
                 candidate.getStatus()
         );
@@ -212,6 +216,7 @@ public class AuthService {
                     admin.getRole(),
                     admin.getAge(),
                     admin.getDob(),
+                    admin.getGender(),
                     null,
                     admin.getStatus()
             );
@@ -307,6 +312,7 @@ public class AuthService {
                 user.getRole(),
                 user.getAge(),
                 user.getDob(),
+                user.getGender(),
                 user.getVoterId(),
                 user.getStatus()
         );

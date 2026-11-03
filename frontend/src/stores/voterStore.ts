@@ -7,7 +7,7 @@ interface VoterState {
   voters: User[];
   isLoading: boolean;
   fetchVoters: () => Promise<void>;
-  registerVoter: (data: { name: string; email: string; dob?: string; age: number; password: string }) => Promise<{ success: boolean; voter?: User; error?: string }>;
+  registerVoter: (data: { name: string; email: string; dob?: string; gender?: string; age: number; password: string }) => Promise<{ success: boolean; voter?: User; error?: string }>;
   getVoterById: (voterId: string) => User | undefined;
 }
 
@@ -37,6 +37,7 @@ export const useVoterStore = create<VoterState>()(
             name: data.name,
             email: data.email,
             dob: data.dob,
+            gender: data.gender,
             age: data.age,
             password: data.password,
           });
@@ -48,6 +49,7 @@ export const useVoterStore = create<VoterState>()(
               name: authData.name,
               email: authData.email,
               dob: authData.dob,
+              gender: authData.gender,
               age: authData.age,
               password: '',
               role: 'VOTER',

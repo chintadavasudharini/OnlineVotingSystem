@@ -168,6 +168,7 @@ export const useAuthStore = create<AuthState>()(
               name: data.name,
               email: data.email,
               dob: data.dob,
+              gender: data.gender,
               age: data.age,
               password: '',
               role: data.role as Role,

@@ -7,6 +7,7 @@ export interface User {
   name: string;
   email: string;
   dob?: string;
+  gender?: string;
   age: number;
   password: string;
   role: Role;

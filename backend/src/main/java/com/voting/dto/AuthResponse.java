@@ -14,10 +14,15 @@ public class AuthResponse {
     private LocalDate dob;
     private String voterId;
     private String status;
+    private String gender;
 
     public AuthResponse() {}
 
     public AuthResponse(String token, String id, String name, String email, Role role, int age, LocalDate dob, String voterId, String status) {
+        this(token, id, name, email, role, age, dob, null, voterId, status);
+    }
+
+    public AuthResponse(String token, String id, String name, String email, Role role, int age, LocalDate dob, String gender, String voterId, String status) {
         this.token = token;
         this.id = id;
         this.name = name;
@@ -25,6 +30,7 @@ public class AuthResponse {
         this.role = role;
         this.age = age;
         this.dob = dob;
+        this.gender = gender;
         this.voterId = voterId;
         this.status = status;
     }
@@ -99,5 +105,13 @@ public class AuthResponse {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 }

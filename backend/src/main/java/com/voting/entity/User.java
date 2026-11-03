@@ -23,6 +23,9 @@ public class User {
     @Column(name = "dob")
     private LocalDate dob;
 
+    @Column(name = "gender", length = 20)
+    private String gender;
+
     @Column(nullable = false)
     private int age;
 
@@ -57,6 +60,11 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
+    public User(String id, String name, String email, LocalDate dob, String gender, int age, String password, Role role, String status, String voterId) {
+        this(id, name, email, dob, age, password, role, status, voterId);
+        this.gender = gender;
+    }
+
     public String getId() {
         return id;
     }
@@ -87,6 +95,14 @@ public class User {
 
     public void setDob(LocalDate dob) {
         this.dob = dob;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
     }
 
     public int getAge() {

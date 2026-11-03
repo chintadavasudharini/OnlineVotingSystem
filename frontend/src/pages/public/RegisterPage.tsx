@@ -22,6 +22,7 @@ export const RegisterPage: React.FC = () => {
     name: '',
     email: '',
     dob: '',
+    gender: '',
     password: '',
     confirmPassword: '',
   });
@@ -52,7 +53,7 @@ export const RegisterPage: React.FC = () => {
     setErrors({});
   };
 
-  const handleVoterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleVoterChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setVoterData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) {
@@ -84,6 +85,7 @@ export const RegisterPage: React.FC = () => {
       name: voterData.name,
       email: voterData.email,
       dob: voterData.dob,
+      gender: voterData.gender,
       password: voterData.password,
       confirmPassword: voterData.confirmPassword,
     };
@@ -107,6 +109,7 @@ export const RegisterPage: React.FC = () => {
       name: result.data.name,
       email: result.data.email,
       dob: result.data.dob,
+      gender: result.data.gender,
       age,
       password: result.data.password,
     });
@@ -370,6 +373,26 @@ export const RegisterPage: React.FC = () => {
                     {isVoterAgeEligible ? 'Eligible to vote (18+)' : 'Must be at least 18 years old'}
                   </div>
                 )}
+              </div>
+
+              {/* Gender */}
+              <div className="form-group">
+                <label className="form-label" htmlFor="gender">
+                  Gender
+                </label>
+                <select
+                  id="gender"
+                  name="gender"
+                  value={voterData.gender}
+                  onChange={handleVoterChange}
+                  className={`form-input ${errors.gender ? 'is-invalid' : ''}`}
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                {errors.gender && <div className="form-error">{errors.gender}</div>}
               </div>
 
               {/* Password */}
