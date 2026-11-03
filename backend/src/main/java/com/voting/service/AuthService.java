@@ -31,6 +31,9 @@ public class AuthService {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private EmailService emailService;
+
     public synchronized String getNextVoterId() {
         List<String> voterIds = userRepository.findAllVoterIds();
         int maxId = 0;
@@ -97,6 +100,8 @@ public class AuthService {
                 voterId + " (" + voter.getName() + ") registered as Voter"
         );
 
+        emailService.sendVoterRegistrationEmail(voter);
+
         String token = tokenProvider.generateToken(voterId, Role.VOTER, voter.getName());
 
         return new AuthResponse(
@@ -155,6 +160,8 @@ public class AuthService {
                 "Candidate Account Created",
                 candidateId + " (" + candidate.getName() + ") created Candidate account linked to Voter " + voter.getId()
         );
+
+        emailService.sendCandidateRegistrationEmail(candidate);
 
         String token = tokenProvider.generateToken(candidateId, Role.CANDIDATE, candidate.getName());
 
