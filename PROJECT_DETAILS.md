@@ -20,6 +20,7 @@
 [![Spring Security 6](https://img.shields.io/badge/Security-Spring%20Security%206-6DB33F?style=flat-square&logo=springsecurity&logoColor=white)](https://spring.io/projects/spring-security)
 [![JWT Stateless](https://img.shields.io/badge/Auth-HMAC--SHA256%20JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 [![Vite 8](https://img.shields.io/badge/Bundler-Vite%208-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Gmail SMTP](https://img.shields.io/badge/Email-Gmail%20SMTP%20TLS-EA4335?style=flat-square&logo=gmail&logoColor=white)](https://mail.google.com/)
 
 </div>
 
@@ -72,6 +73,10 @@ The **SecureVote Online Voting System** is an auditable, high-concurrency electr
 3. **Financial Candidacy Verification**: Candidates must deposit an official nomination security deposit (₹100 / 10000 paise) via Razorpay Orders and HMAC-SHA256 signature verification before their nomination is accepted.
 4. **Constitutional Lineage**: A candidate account must be created from a verified voter account of legal age ($\ge 25$ years old), preventing fraudulent or unverified nominees.
 5. **Session & Routing Invariance**: A browser refresh preserves the exact active URL and authorization context without kicking the user to the landing page or dashboard.
+6. **Demographic Inclusivity & Gender Recognition**: Voter onboarding includes validated gender (`Male`, `Female`, `Other`) positioned immediately after Date of Birth, fully indexed and presented across the citizen profile and administrative management rosters.
+7. **Asynchronous Centralized Email Dispatch**: Powered by Spring Boot Mail (`JavaMailSender`) with Gmail SMTP (TLS 587) and Google App Passwords, delivering branded, responsive HTML voter/candidate onboarding notifications asynchronously (`CompletableFuture`) without blocking database transactions.
+8. **Elected Candidate & Dynamic Tie Detection**: Results certification calculates ballot tallies on-the-fly: a single highest tally renders inside a **green Elected Candidate card** (`🟩`), while deadlocks are segregated inside a **yellow Result: Tie card** (`🟨`) detailing tied candidate vote counts.
+9. **Role-Segregated Authentication**: Dedicated login flows (`/login?role=voter` with Voter ID vs `/login?role=candidate` with Candidate ID vs `/admin` Admin Console) with server-side persona validation to prevent cross-role credential collisions.
 
 ---
 
@@ -102,21 +107,21 @@ The **SecureVote Online Voting System** is an auditable, high-concurrency electr
 |                                                                                       |
 |  [Transactional Service Layer]                                                        |
 |    AuthService ──► ElectionService ──► CandidateService ──► PaymentService            |
-|    VoteService ──► AuditService (Asynchronous Ledger Ingestion)                       |
+|    VoteService ──► AuditService ──► EmailService (Async SMTP Engine)                  |
 |                                                                                       |
 |  [Data Access Layer]                                                                  |
 |    Spring Data JPA Repositories (Hibernate 6.5.3 ORM)                                  |
 +-------------------------------------------+-------------------------------------------+
                                             | HikariCP Connection Pool (JDBC)
-                      +---------------------+---------------------+
-                      |                                           |
-                      v                                           v
-+-------------------------------------------+   +---------------------------------------+
-|      PERSISTENCE TIER (PostgreSQL)        |   |           RAZORPAY GATEWAY            |
-|  - users (RBAC & Lineage)                 |   |  - Orders API (Server-Side Creation)  |
-|  - elections (Temporal Lifecycles)        |   |  - Client Checkout (v1/checkout.js)  |
-|  - candidate_registrations (Deposits)     |   |  - Webhook & Signature Verification   |
-|  - votes (UNIQUE: election_id, voter_id)  |   +---------------------------------------+
+                      +---------------------+---------------------+---------------------+
+                      |                                           |                     |
+                      v                                           v                     v
++-------------------------------------------+   +-----------------------+   +-----------------------+
+|      PERSISTENCE TIER (PostgreSQL)        |   |    RAZORPAY GATEWAY   |   |   GMAIL SMTP SERVER   |
+|  - users (RBAC, Gender & Lineage)         |   |  - Orders API         |   |  - TLS 587 Transport  |
+|  - elections (Temporal Lifecycles)        |   |  - Client Checkout    |   |  - App Passwords      |
+|  - candidate_registrations (Deposits)     |   |  - HMAC Signature     |   |  - Async Dispatch     |
+|  - votes (UNIQUE: election_id, voter_id)  |   +-----------------------+   +-----------------------+
 |  - audit_logs (Immutable Ledger)          |
 +-------------------------------------------+
 ```
@@ -131,6 +136,7 @@ The **SecureVote Online Voting System** is an auditable, high-concurrency electr
 | **Backend Core** | Spring Boot | `3.3.4` | Modern enterprise baseline (Spring Framework 6.1, Jakarta EE 10, Tomcat 10.1). |
 | **Security** | Spring Security | `6.1.13` | Component-based security filter chain, method security via `@PreAuthorize`. |
 | **Payment Gateway** | Razorpay REST API | `v1` | PCI-DSS certified gateway with server-side HMAC-SHA256 signature verification. |
+| **Email Engine** | Spring Boot Mail | `3.3.4` | JavaMailSender integration with Gmail SMTP over TLS 587, HTML templating & asynchronous dispatch. |
 | **Cryptography** | JJWT | `0.12.6` | Modern modular JWT library (`jjwt-api`, `jjwt-impl`, `jjwt-jackson`) utilizing 256-bit keys. |
 | **Data Layer** | Spring Data JPA | `3.3.4` | Abstraction over Hibernate 6 with derived queries and type-safe transactional boundaries. |
 | **Database** | PostgreSQL | `16 / 18` | Industry benchmark for ACID compliance, composite uniqueness enforcement, and row-level locking. |
@@ -283,23 +289,28 @@ sequenceDiagram
 
 ## 7. Public Election Board & Live Candidate Roster
 
-The Public Election Board provides real-time transparency for voters and citizens:
+The Public Election Board provides real-time transparency for voters and citizens based on system clock calculations:
 
-1. **Upcoming & Registration Open Elections**:
-   - Lists participating candidates in the standardized format:  
-     `C.ID - NAME` (e.g. `C1 - Jane Doe`)
-   - If no candidates have registered: Displays `No candidates participating.`
-   - Interactive Call-to-Actions: *Login as Candidate to Register* or *Registration Open*.
+1. **Upcoming Elections (`UPCOMING`)**:
+   - Informative notice: *Candidate registration has not started yet. Interested candidates can register for this election after REGISTRATION OPEN.*
+   - Footer status: *Scheduled to begin soon*.
 
-2. **Voting Open Elections**:
-   - Displays participating candidates dynamically for that specific election.
-   - Interactive CTA: *Login to Cast Vote*.
+2. **Registration Open Elections (`REGISTRATION_OPEN`)**:
+   - Notification: *Candidate registration is now open. Eligible candidates interested in participating can register.*
+   - Displays live enrolled candidates in the standardized format: `C1 - Candidate Name`.
+   - Call-to-Action: *Login as Candidate to Register*.
 
-3. **Completed Elections**:
-   - **Candidates Participated**: Lists all candidates who ran in that election (`C.ID - NAME`).
-   - **Total Voters**: Dynamically queries and displays total registered voters in the system.
+3. **Voting Open Elections (`VOTING_OPEN`)**:
+   - Displays actual enrolled candidates participating in the election.
+   - Call-to-Action: *Login to Cast Vote*.
+
+4. **Completed & Results Published Elections (`COMPLETED` / `RESULTS_PUBLISHED`)**:
+   - **Candidates Participated**: Lists all candidates who participated (`C1 - Candidate Name`).
+   - **Total Voters**: Dynamically queries and displays total registered voters for that election.
    - **Total Votes Cast**: Dynamically tallies all verified votes cast in that election.
-   - Status badge: `Voting Closed • Results Awaiting Publication` (or Certified Winner banner when published).
+   - **Elected Candidate (Single Winner)**: When a single candidate achieves the highest vote count, rendered inside a dedicated **Green Card** (`🟩 Elected Candidate`) displaying `Candidate ID - Candidate Name`.
+   - **Result: Tie (Deadlock)**: When two or more candidates share the identical highest vote count, rendered inside a dedicated **Yellow Card** (`🟨 Result: Tie`) showing each tied candidate with their exact vote tally (e.g. `C1 - Jane Doe → 1,500 votes`).
+   - Status badge: `Results Published • Login to View` or `Voting Closed • Results Awaiting Publication`.
 
 ---
 
@@ -312,18 +323,46 @@ erDiagram
     elections ||--o{ candidate_registrations : "features"
     elections ||--o{ votes : "records"
     users ||--o{ audit_logs : "audits"
+    users ||--o{ otp_verifications : "verifies"
+    users ||--o{ password_reset_tokens : "recovers"
 
     users {
         VARCHAR(50) id PK "admin, V1, C1"
         VARCHAR(100) name "Citizen Name"
         VARCHAR(150) email UK "Unique Email Address"
         DATE dob "Date of Birth"
+        VARCHAR(20) gender "Gender (Male/Female/Other)"
         INTEGER age "Voter >= 18, Candidate >= 25"
         VARCHAR(255) password "BCrypt Salted Hash"
         VARCHAR(20) role "ADMIN | VOTER | CANDIDATE"
         VARCHAR(50) voter_id FK "Lineage to parent voter identity"
         VARCHAR(20) status "ACTIVE"
         TIMESTAMP created_at "Account Creation Timestamp"
+    }
+
+    otp_verifications {
+        BIGINT id PK "Auto-increment ID"
+        VARCHAR(50) user_id FK "Voter/Candidate ID"
+        VARCHAR(150) email "Recipient Email"
+        VARCHAR(64) otp_hash "SHA-256 Hash of 6-char OTP"
+        VARCHAR(50) purpose "REGISTRATION | PASSWORD_UPDATE | EMAIL_UPDATE"
+        INTEGER attempts "Max 5 incorrect attempts"
+        INTEGER resend_count "Max 5 per rolling hour"
+        TIMESTAMP created_at "Issuance Timestamp"
+        TIMESTAMP expires_at "30-Second TTL"
+        TIMESTAMP used_at "Single-Use Consumption"
+        BOOLEAN is_invalidated "Security Revocation"
+    }
+
+    password_reset_tokens {
+        BIGINT id PK "Auto-increment ID"
+        VARCHAR(50) user_id FK "Target User"
+        VARCHAR(150) email "Registered Email"
+        VARCHAR(64) token_hash "SHA-256 Hash of Secure Token"
+        TIMESTAMP created_at "Issuance Timestamp"
+        TIMESTAMP expires_at "1-Minute TTL"
+        TIMESTAMP used_at "Consumption Timestamp"
+        BOOLEAN used "Single-Use Guard"
     }
 
     elections {
@@ -724,7 +763,11 @@ ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"
 | `SPRING_DATASOURCE_PASSWORD` | Web Service | `<db_password>` |
 | `RAZORPAY_KEY_ID` | Web Service | Razorpay Test API Key ID |
 | `RAZORPAY_KEY_SECRET` | Web Service | Razorpay Test API Secret |
+| `SPRING_MAIL_USERNAME` | Web Service | Gmail SMTP Account (`vasu.demoprojects@gmail.com`) |
+| `SPRING_MAIL_PASSWORD` | Web Service | Google App Password for OVS (16 characters) |
 | `VITE_API_BASE_URL` | Static Site | `https://securevote-onlinevotingsystem-backend.onrender.com/api` |
+
+> 📑 **Enterprise Email & Security Subsystem Specification:** For the complete architecture covering all 15 email notification types, 30-second cryptographic OTP generation, and 1-minute password reset recovery, see [`Email Notifications & OTP Implementation.md`](./Email%20Notifications%20&%20OTP%20Implementation.md).
 
 ---
 
@@ -737,7 +780,7 @@ ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"
 +-----------------------+-----------------------------+---------------------------------+
 | Test Suite / Tool     | Target                      | Result Metric                   |
 +-----------------------+-----------------------------+---------------------------------+
-| Java Compiler (javac) | 45 Spring Boot Classes      | BUILD SUCCESS (0 Errors)        |
+| Java Compiler (javac) | 46 Spring Boot Classes      | BUILD SUCCESS (0 Errors)        |
 | JUnit 5 / Spring Test | OnlineVotingSystemAppTests  | Tests run: 1, Failures: 0       |
 | TypeScript Compiler   | frontend/src (React 19)     | Clean compilation (0 Errors)    |
 | Static Linter (oxlint)| 42 Frontend source files    | 0 Errors, 0 Warnings            |

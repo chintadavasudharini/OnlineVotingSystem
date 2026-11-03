@@ -15,6 +15,7 @@
 [![Spring Security](https://img.shields.io/badge/Security-Spring%20Security%206-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)](https://spring.io/projects/spring-security)
 [![JWT](https://img.shields.io/badge/Auth-Stateless%20JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
 [![Vite](https://img.shields.io/badge/Bundler-Vite%208-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Gmail SMTP](https://img.shields.io/badge/Email-Gmail%20SMTP%20TLS-EA4335?style=for-the-badge&logo=gmail&logoColor=white)](https://mail.google.com/)
 
 <p align="center">
   A high-integrity, multi-tenant digital balloting and election governance system designed to eliminate voter fraud, prevent double-voting via composite transactional constraints, enforce temporal state-machine election lifecycles, verify candidate nomination security deposits via Razorpay, and maintain an immutable cryptographic audit ledger for certified results.
@@ -70,6 +71,10 @@ Democratic integrity requires software systems to guarantee four non-negotiable 
 | **Zero Double-Voting** | Multi-layer barrier: JPA pre-check (`!hasVoted`) combined with PostgreSQL composite unique key constraint `UNIQUE(election_id, voter_id)`. Rejects duplicate attempts atomically even under high concurrency. |
 | **Candidate Nomination Security Deposit** | Built-in **Razorpay Gateway** integration requiring a ₹100 deposit (10000 paise) before candidacy confirmation, validated server-side via HMAC-SHA256 signature verification. |
 | **Constitutional Age Separation** | Enforces constitutional age eligibility: Voters must be $\ge 18$ years. Candidates must be $\ge 25$ years and possess a verified lineage to an active voter identity (`voter_id`). |
+| **Demographic Inclusivity (Gender Recognition)** | First-class gender capture (`Male`, `Female`, `Other`) immediately after Date of Birth on registration, stored in PostgreSQL, and reflected across Voter Profile and Admin Roster. |
+| **Centralized Email Notification Engine** | Powered by **Spring Boot Mail** & **Gmail SMTP (TLS 587)** using Google App Passwords; delivers branded, responsive HTML confirmation emails with auto-generated Voter/Candidate IDs asynchronously via `CompletableFuture`. |
+| **Elected Candidate & Dynamic Tie Detection** | Certified election cards dynamically identify the top vote tally: single winner is rendered inside a **Green Elected Candidate card** (`🟩`), while multi-candidate deadlocks are isolated in a **Yellow Tie Result card** (`🟨`) detailing exact candidate tallies. |
+| **Strict Role-Isolated Authentication** | Dedicated, role-enforced login portals (`/login?role=voter` with Voter ID vs `/login?role=candidate` with Candidate ID vs `/admin` Admin Console) preventing cross-persona credential access. |
 | **Time-Locked Lifecycles** | Election states (`UPCOMING`, `REGISTRATION_OPEN`, `VOTING_OPEN`, `COMPLETED`, `RESULTS_PUBLISHED`) are calculated deterministically on-the-fly from atomic timestamps. |
 | **Global Refresh Persistence** | Custom SPA routing guards and Zustand store persistence guarantee that reloading any URL (`/admin/dashboard`, `/voter/profile`, `/candidate/elections/E1`) maintains the exact state without cross-role redirects. |
 | **Dynamic Public Transparency** | Public election board lists live participating candidates (`C.ID - NAME`) per election, with dynamic total voters and total votes cast on completed cards. |
@@ -109,14 +114,20 @@ Democratic integrity requires software systems to guarantee four non-negotiable 
    │  │              Business Logic & State Machine           │  │
    │  │  AuthService   ElectionService   VoteService          │  │
    │  │  CandidateService   AuditService   PaymentService     │  │
+   │  │  EmailService (JavaMailSender / Gmail SMTP Async)     │  │
    │  └───────────────┬───────────────────────────┬───────────┘  │
    └──────────────────┼───────────────────────────┼──────────────┘
-                      │                           │ Razorpay REST API
-                      ▼                           ▼
-   ┌───────────────────────────────────┐    ┌────────────────────┐
-   │    Persistence Tier (PostgreSQL)  │    │  Razorpay Gateway  │
-   │  users, elections, votes,         │    │  Orders & Webhooks │
-   │  candidate_registrations, audit   │    └────────────────────┘
+                      │                           │ Integrations
+                      │                           ├──────────────────► [ Razorpay Gateway ]
+                      │                           │                    (Orders & Webhooks)
+                      │                           │
+                      │                           └──────────────────► [ Gmail SMTP Server ]
+                      │                                                (vasu.demoprojects@gmail.com)
+                      ▼
+   ┌───────────────────────────────────┐
+   │    Persistence Tier (PostgreSQL)  │
+   │  users, elections, votes,         │
+   │  candidate_registrations, audit   │
    └───────────────────────────────────┘
 ```
 
@@ -181,19 +192,23 @@ sequenceDiagram
 
 ## 6. Public Election Board & Live Candidate Roster
 
-The public elections board provides real-time information for all users:
+The public elections board provides real-time information for all users according to live clock offsets:
 
-- **Upcoming & Registration Open Elections**:
-  - Displays dynamic list of enrolled candidates formatted as `C.ID - NAME` (e.g. `C1 - Candidate Name`).
-  - Action buttons: *Login as Candidate to Register* or *Registration Open*.
-- **Voting Open Elections**:
-  - Displays candidates participating in that specific election.
+- **Upcoming Elections (`UPCOMING`)**:
+  - Informs citizens that candidate registration has not opened yet.
+  - Footer status: *Scheduled to begin soon*.
+- **Candidate Registration Open (`REGISTRATION_OPEN`)**:
+  - Displays dynamic list of enrolled candidates (`C1 - Candidate Name`).
+  - Action button: *Login as Candidate to Register*.
+- **Voting Open Elections (`VOTING_OPEN`)**:
+  - Displays actual participating candidates.
   - Action button: *Login to Cast Vote*.
-- **Completed Elections**:
+- **Completed & Certified Elections (`COMPLETED` / `RESULTS_PUBLISHED`)**:
   - Displays **Candidates Participated**: `C.ID - NAME`
-  - Displays **Total Voters**: Real-time count of eligible registered voters.
+  - Displays **Total Voters**: Real-time count of eligible registered voters for that election.
   - Displays **Total Votes Cast**: Real-time tally of verified votes recorded.
-  - Winner banner displayed once certified by Super Admin.
+  - **Elected Candidate (Single Winner)**: Rendered inside a prominent **green card** (`🟩 Elected Candidate`) displaying the victorious candidate ID and Name.
+  - **Tie Case (Deadlock)**: If two or more top candidates have identical vote tallies, rendered inside a **yellow card** (`🟨 Result: Tie`) showing all tied candidates and their exact vote counts.
 
 ---
 
@@ -212,6 +227,7 @@ erDiagram
         varchar(100) name "Full Name"
         varchar(150) email UK "Unique Email"
         date dob "Date of Birth"
+        varchar(20) gender "Gender (Male/Female/Other)"
         integer age "Computed Age"
         varchar(255) password "BCrypt Hash"
         varchar(20) role "ADMIN | VOTER | CANDIDATE"
@@ -282,9 +298,11 @@ Base URL:
 ### 2. Authentication & Citizen Onboarding
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `POST` | `/api/auth/login` | Public | Authenticates user (Admin, Voter, Candidate) and issues JWT Bearer token |
-| `POST` | `/api/auth/register-voter` | Public | Enrolls voter ($\ge 18$ yrs), auto-generates Voter ID (`V1`, `V2`...) |
-| `POST` | `/api/auth/register-candidate` | Public | Elevates verified voter ($\ge 25$ yrs) to Candidate (`C1`, `C2`...) |
+| `POST` | `/api/auth/login` | Public | Authenticates user (Admin, Voter, Candidate) with strict role isolation and issues JWT Bearer token |
+| `POST` | `/api/auth/register-voter` | Public | Enrolls voter ($\ge 18$ yrs with DOB & Gender), auto-generates Voter ID (`V1`, `V2`...), and triggers async confirmation email |
+| `POST` | `/api/auth/register-candidate` | Public | Elevates verified voter ($\ge 25$ yrs) to Candidate (`C1`, `C2`...), and triggers async confirmation email |
+
+> 📑 **Full Email, OTP & Recovery Subsystem:** See [`Email Notifications & OTP Implementation.md`](./Email%20Notifications%20&%20OTP%20Implementation.md) for the specification covering all 15 notification types, 30-second cryptographic OTP verification, and 1-minute password reset tokens.
 
 ### 3. Payment Gateway (Razorpay)
 | Method | Endpoint | Access | Description |
@@ -413,6 +431,8 @@ The project includes built-in containerization support for one-click deployment 
    | `SPRING_DATASOURCE_PASSWORD` | `<db_password>` |
    | `RAZORPAY_KEY_ID` | `<your_razorpay_key_id>` |
    | `RAZORPAY_KEY_SECRET` | `<your_razorpay_key_secret>` |
+   | `SPRING_MAIL_USERNAME` | `vasu.demoprojects@gmail.com` |
+   | `SPRING_MAIL_PASSWORD` | `<your_google_app_password>` |
 5. Click **Deploy Web Service**.
 
 ### Step 3: Deploy React Frontend (Static Site)
