@@ -9,261 +9,248 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.ITemplateEngine;
+import org.thymeleaf.context.Context;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 @Service
 public class EmailService {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy, hh:mm a");
 
     @Autowired(required = false)
     private JavaMailSender mailSender;
+
+    @Autowired(required = false)
+    private ITemplateEngine templateEngine;
 
     @Value("${spring.mail.username:vasu.demoprojects@gmail.com}")
     private String fromEmail;
 
     /**
-     * Sends a rich confirmation email to a newly registered voter with their Voter ID.
+     * Centralized asynchronous template dispatcher.
      */
+    public void sendTemplateEmail(String toEmail, String subject, String templateName, Map<String, Object> variables) {
+        if (mailSender == null) {
+            logger.warn("JavaMailSender is not configured. Skipping email to {}", toEmail);
+            return;
+        }
+
+        CompletableFuture.runAsync(() -> {
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+                helper.setFrom("SecureVote <" + fromEmail + ">");
+                helper.setTo(toEmail);
+                helper.setSubject(subject);
+
+                String htmlContent = "";
+                if (templateEngine != null) {
+                    Context context = new Context();
+                    context.setVariables(variables);
+                    htmlContent = templateEngine.process("email/" + templateName, context);
+                }
+
+                helper.setText(htmlContent, true);
+                mailSender.send(message);
+                logger.info("Successfully dispatched email [{}] to {}", subject, toEmail);
+            } catch (Exception ex) {
+                logger.error("Failed to send template email [{}] to {}: {}", subject, toEmail, ex.getMessage(), ex);
+            }
+        });
+    }
+
+    // 1. OTP Verification Email (30-second validity)
+    public void sendOtpEmail(String toEmail, String name, String otp, String purpose) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("name", name != null ? name : "Citizen");
+        vars.put("otp", otp);
+        vars.put("purpose", purpose);
+        vars.put("validitySeconds", 30);
+        vars.put("expiresAt", LocalDateTime.now().plusSeconds(30).format(FORMATTER));
+        sendTemplateEmail(toEmail, "🔐 Your SecureVote Verification Code: " + otp, "otp-verification", vars);
+    }
+
+    // 2. Voter Welcome Email
     public void sendVoterRegistrationEmail(User voter) {
-        if (mailSender == null) {
-            logger.warn("JavaMailSender is not configured. Skipping voter registration email for {}", voter.getEmail());
-            return;
-        }
-
-        CompletableFuture.runAsync(() -> {
-            try {
-                MimeMessage message = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-                helper.setFrom("SecureVote <" + fromEmail + ">");
-                helper.setTo(voter.getEmail());
-                helper.setSubject("🗳️ Welcome to SecureVote — Voter Registration Confirmed (" + voter.getId() + ")");
-
-                String htmlContent = buildVoterEmailTemplate(voter);
-                helper.setText(htmlContent, true);
-
-                mailSender.send(message);
-                logger.info("Successfully sent voter registration confirmation email to {} with Voter ID {}", voter.getEmail(), voter.getId());
-            } catch (Exception ex) {
-                logger.error("Failed to send voter registration email to {}: {}", voter.getEmail(), ex.getMessage(), ex);
-            }
-        });
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("name", voter.getName());
+        vars.put("voterId", voter.getId());
+        vars.put("email", voter.getEmail());
+        vars.put("dob", voter.getDob() != null ? voter.getDob().toString() : "Not specified");
+        vars.put("gender", voter.getGender() != null && !voter.getGender().isBlank() ? voter.getGender() : "Not specified");
+        vars.put("status", "ACTIVE");
+        vars.put("loginUrl", "https://securevote-onlinevotingsystem.vercel.app/login?role=voter");
+        sendTemplateEmail(voter.getEmail(), "🗳️ Welcome to SecureVote — Voter Registration Confirmed (" + voter.getId() + ")", "voter-welcome", vars);
     }
 
-    /**
-     * Sends a rich confirmation email to a newly registered candidate with their Candidate ID.
-     */
+    // 3. Candidate Welcome Email
     public void sendCandidateRegistrationEmail(User candidate) {
-        if (mailSender == null) {
-            logger.warn("JavaMailSender is not configured. Skipping candidate registration email for {}", candidate.getEmail());
-            return;
-        }
-
-        CompletableFuture.runAsync(() -> {
-            try {
-                MimeMessage message = mailSender.createMimeMessage();
-                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-                helper.setFrom("SecureVote <" + fromEmail + ">");
-                helper.setTo(candidate.getEmail());
-                helper.setSubject("🏆 SecureVote Candidate Account Created — Candidate ID: " + candidate.getId());
-
-                String htmlContent = buildCandidateEmailTemplate(candidate);
-                helper.setText(htmlContent, true);
-
-                mailSender.send(message);
-                logger.info("Successfully sent candidate registration confirmation email to {} with Candidate ID {}", candidate.getEmail(), candidate.getId());
-            } catch (Exception ex) {
-                logger.error("Failed to send candidate registration email to {}: {}", candidate.getEmail(), ex.getMessage(), ex);
-            }
-        });
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("name", candidate.getName());
+        vars.put("candidateId", candidate.getId());
+        vars.put("voterId", candidate.getVoterId() != null ? candidate.getVoterId() : "N/A");
+        vars.put("email", candidate.getEmail());
+        vars.put("status", "ACTIVE");
+        vars.put("loginUrl", "https://securevote-onlinevotingsystem.vercel.app/login?role=candidate");
+        sendTemplateEmail(candidate.getEmail(), "🏆 SecureVote Candidate Account Created — Candidate ID: " + candidate.getId(), "candidate-welcome", vars);
     }
 
-    private String buildVoterEmailTemplate(User voter) {
-        String genderDisplay = voter.getGender() != null && !voter.getGender().isBlank() ? voter.getGender() : "Not specified";
-        String dobDisplay = voter.getDob() != null ? voter.getDob().toString() : "Not specified";
-
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Voter Registration Confirmed</title>
-            </head>
-            <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155;">
-              <table role="presentation" width="100%%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
-                <tr>
-                  <td align="center">
-                    <table role="presentation" width="100%%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
-                      
-                      <!-- Header -->
-                      <tr>
-                        <td style="background: linear-gradient(135deg, #1e3a8a 0%%, #2563eb 100%%); padding: 32px 28px; text-align: center; color: #ffffff;">
-                          <div style="font-size: 32px; margin-bottom: 8px;">🗳️</div>
-                          <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.02em;">SecureVote</h1>
-                          <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.9; font-weight: 400;">Online Democratic Voting Platform</p>
-                        </td>
-                      </tr>
-
-                      <!-- Body -->
-                      <tr>
-                        <td style="padding: 32px 28px;">
-                          <h2 style="margin: 0 0 12px; font-size: 20px; color: #0f172a; font-weight: 700;">Welcome, %s!</h2>
-                          <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #475569;">
-                            Your voter registration has been successfully processed and verified. You are now officially enrolled to cast your ballot in all eligible elections.
-                          </p>
-
-                          <!-- Credential Box -->
-                          <div style="background-color: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px; padding: 20px; margin-bottom: 24px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #1e40af; letter-spacing: 0.08em; margin-bottom: 6px;">Your Official Voter ID</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #1d4ed8; letter-spacing: 0.05em; margin-bottom: 6px;">%s</div>
-                            <div style="font-size: 12px; color: #64748b;">Use this Voter ID together with your password to log in.</div>
-                          </div>
-
-                          <!-- Details Table -->
-                          <table role="presentation" width="100%%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px; font-size: 14px; border-collapse: collapse;">
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                              <td style="padding: 10px 0; font-weight: 600; color: #64748b; width: 40%%;">Full Name:</td>
-                              <td style="padding: 10px 0; font-weight: 600; color: #0f172a;">%s</td>
-                            </tr>
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                              <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Registered Email:</td>
-                              <td style="padding: 10px 0; color: #0f172a;">%s</td>
-                            </tr>
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                              <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Date of Birth:</td>
-                              <td style="padding: 10px 0; color: #0f172a;">%s</td>
-                            </tr>
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                              <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Gender:</td>
-                              <td style="padding: 10px 0; color: #0f172a;">%s</td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Status:</td>
-                              <td style="padding: 10px 0; color: #15803d; font-weight: 700;">ACTIVE (Verified)</td>
-                            </tr>
-                          </table>
-
-                          <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 14px 16px; border-radius: 4px; margin-bottom: 24px;">
-                            <div style="font-weight: 700; font-size: 13px; color: #0f172a; margin-bottom: 4px;">Important Security Reminder</div>
-                            <div style="font-size: 13px; color: #64748b; line-height: 1.5;">
-                              Never share your password with anyone. SecureVote will never ask for your password via email or phone.
-                            </div>
-                          </div>
-
-                          <!-- Call To Action -->
-                          <div style="text-align: center; margin-top: 28px;">
-                            <a href="https://securevote-onlinevotingsystem.vercel.app/login?role=voter" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(37,99,235,0.3);">
-                              Go to Voter Login &rarr;
-                            </a>
-                          </div>
-                        </td>
-                      </tr>
-
-                      <!-- Footer -->
-                      <tr>
-                        <td style="background-color: #f8fafc; padding: 20px 28px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8;">
-                          <p style="margin: 0 0 6px;">SecureVote Online Democratic Voting System</p>
-                          <p style="margin: 0;">Designed for democratic transparency, cryptographic non-repudiation, and institutional trust.</p>
-                        </td>
-                      </tr>
-
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </body>
-            </html>
-            """.formatted(voter.getName(), voter.getId(), voter.getName(), voter.getEmail(), dobDisplay, genderDisplay);
+    // 4. New Election Announcement
+    public void sendNewElectionEmail(String toEmail, String recipientName, String electionId, String title, String description, String regStart, String regEnd, String voteStart, String voteEnd) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", recipientName);
+        vars.put("electionId", electionId);
+        vars.put("electionTitle", title);
+        vars.put("description", description);
+        vars.put("registrationStart", regStart);
+        vars.put("registrationEnd", regEnd);
+        vars.put("votingStart", voteStart);
+        vars.put("votingEnd", voteEnd);
+        vars.put("viewUrl", "https://securevote-onlinevotingsystem.vercel.app/elections");
+        sendTemplateEmail(toEmail, "📢 New Election Announced: " + title + " (" + electionId + ")", "new-election", vars);
     }
 
-    private String buildCandidateEmailTemplate(User candidate) {
-        String linkedVoter = candidate.getVoterId() != null ? candidate.getVoterId() : "N/A";
+    // 5. Candidate Registration Period Update
+    public void sendRegistrationPeriodUpdateEmail(String toEmail, String recipientName, String electionId, String title, String oldPeriod, String newPeriod) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", recipientName);
+        vars.put("electionId", electionId);
+        vars.put("electionTitle", title);
+        vars.put("oldRegistrationPeriod", oldPeriod);
+        vars.put("newRegistrationPeriod", newPeriod);
+        vars.put("viewUrl", "https://securevote-onlinevotingsystem.vercel.app/candidate/elections");
+        sendTemplateEmail(toEmail, "⏱️ Schedule Update: Registration Window Revised for " + electionId, "registration-period-update", vars);
+    }
 
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <meta charset="utf-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Candidate Account Confirmed</title>
-            </head>
-            <body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155;">
-              <table role="presentation" width="100%%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
-                <tr>
-                  <td align="center">
-                    <table role="presentation" width="100%%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -2px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">
-                      
-                      <!-- Header -->
-                      <tr>
-                        <td style="background: linear-gradient(135deg, #7c2d12 0%%, #c2410c 100%%); padding: 32px 28px; text-align: center; color: #ffffff;">
-                          <div style="font-size: 32px; margin-bottom: 8px;">🏆</div>
-                          <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.02em;">SecureVote</h1>
-                          <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.9; font-weight: 400;">Candidate Governance & Nomination Portal</p>
-                        </td>
-                      </tr>
+    // 6. Voting Period Update
+    public void sendVotingPeriodUpdateEmail(String toEmail, String recipientName, String electionId, String title, String oldPeriod, String newPeriod) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", recipientName);
+        vars.put("electionId", electionId);
+        vars.put("electionTitle", title);
+        vars.put("oldVotingPeriod", oldPeriod);
+        vars.put("newVotingPeriod", newPeriod);
+        vars.put("viewUrl", "https://securevote-onlinevotingsystem.vercel.app/voter/elections");
+        sendTemplateEmail(toEmail, "🗳️ Schedule Update: Voting Window Revised for " + electionId, "voting-period-update", vars);
+    }
 
-                      <!-- Body -->
-                      <tr>
-                        <td style="padding: 32px 28px;">
-                          <h2 style="margin: 0 0 12px; font-size: 20px; color: #0f172a; font-weight: 700;">Congratulations, %s!</h2>
-                          <p style="margin: 0 0 20px; font-size: 15px; line-height: 1.6; color: #475569;">
-                            Your Candidate account has been approved and activated. You can now log in, submit your election nomination, publish campaign promises, and participate in scheduled elections.
-                          </p>
+    // 7. General Election Schedule Update
+    public void sendElectionScheduleUpdateEmail(String toEmail, String recipientName, String electionId, String title, String changeSummary, String regWindow, String voteWindow) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", recipientName);
+        vars.put("electionId", electionId);
+        vars.put("electionTitle", title);
+        vars.put("changeSummary", changeSummary);
+        vars.put("registrationWindow", regWindow);
+        vars.put("votingWindow", voteWindow);
+        vars.put("viewUrl", "https://securevote-onlinevotingsystem.vercel.app/elections");
+        sendTemplateEmail(toEmail, "📅 Election Schedule Updated: " + title + " (" + electionId + ")", "election-schedule-update", vars);
+    }
 
-                          <!-- Credential Box -->
-                          <div style="background-color: #fff7ed; border: 1.5px solid #fed7aa; border-radius: 10px; padding: 20px; margin-bottom: 24px; text-align: center;">
-                            <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #9a3412; letter-spacing: 0.08em; margin-bottom: 6px;">Your Official Candidate ID</div>
-                            <div style="font-size: 28px; font-weight: 800; color: #c2410c; letter-spacing: 0.05em; margin-bottom: 6px;">%s</div>
-                            <div style="font-size: 12px; color: #78716c;">Linked to Voter ID: <strong>%s</strong></div>
-                          </div>
+    // 8. Election Results Published
+    public void sendElectionResultsEmail(String toEmail, String recipientName, String electionId, String title, String totalVoters, String totalVotes, String winnerName) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", recipientName);
+        vars.put("electionId", electionId);
+        vars.put("electionTitle", title);
+        vars.put("totalVoters", totalVoters);
+        vars.put("totalVotes", totalVotes);
+        vars.put("winnerName", winnerName);
+        vars.put("resultsUrl", "https://securevote-onlinevotingsystem.vercel.app/elections");
+        sendTemplateEmail(toEmail, "📊 Official Results Certified: " + title + " (" + electionId + ")", "election-results", vars);
+    }
 
-                          <!-- Details Table -->
-                          <table role="presentation" width="100%%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px; font-size: 14px; border-collapse: collapse;">
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                              <td style="padding: 10px 0; font-weight: 600; color: #64748b; width: 40%%;">Candidate Name:</td>
-                              <td style="padding: 10px 0; font-weight: 600; color: #0f172a;">%s</td>
-                            </tr>
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                              <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Registered Email:</td>
-                              <td style="padding: 10px 0; color: #0f172a;">%s</td>
-                            </tr>
-                            <tr style="border-bottom: 1px solid #f1f5f9;">
-                              <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Role:</td>
-                              <td style="padding: 10px 0; color: #c2410c; font-weight: 700;">CANDIDATE</td>
-                            </tr>
-                            <tr>
-                              <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Account Status:</td>
-                              <td style="padding: 10px 0; color: #15803d; font-weight: 700;">ACTIVE</td>
-                            </tr>
-                          </table>
+    // 9. Election Deleted / Cancelled
+    public void sendElectionDeletedEmail(String toEmail, String recipientName, String electionId, String title, String deletedAt, String reason) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", recipientName);
+        vars.put("electionId", electionId);
+        vars.put("electionTitle", title);
+        vars.put("deletedAt", deletedAt != null ? deletedAt : LocalDateTime.now().format(FORMATTER));
+        vars.put("reason", reason != null ? reason : "Administrative Reschedule");
+        sendTemplateEmail(toEmail, "⚠️ Election Cancelled: " + title + " (" + electionId + ")", "election-deleted", vars);
+    }
 
-                          <!-- Call To Action -->
-                          <div style="text-align: center; margin-top: 28px;">
-                            <a href="https://securevote-onlinevotingsystem.vercel.app/login?role=candidate" style="display: inline-block; background-color: #ea580c; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(234,88,12,0.3);">
-                              Go to Candidate Login &rarr;
-                            </a>
-                          </div>
-                        </td>
-                      </tr>
+    // 10. Candidate Election Registration / Nomination Confirmed
+    public void sendCandidateElectionRegistrationEmail(String toEmail, String candidateName, String candidateId, String electionId, String electionTitle, String manifestoTitle, String registeredAt) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("candidateName", candidateName);
+        vars.put("candidateId", candidateId);
+        vars.put("electionId", electionId);
+        vars.put("electionTitle", electionTitle);
+        vars.put("manifestoTitle", manifestoTitle);
+        vars.put("registeredAt", registeredAt != null ? registeredAt : LocalDateTime.now().format(FORMATTER));
+        vars.put("viewUrl", "https://securevote-onlinevotingsystem.vercel.app/candidate/elections");
+        sendTemplateEmail(toEmail, "📜 Candidacy Confirmed for " + electionId + " — " + electionTitle, "candidate-registration", vars);
+    }
 
-                      <!-- Footer -->
-                      <tr>
-                        <td style="background-color: #f8fafc; padding: 20px 28px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #94a3b8;">
-                          <p style="margin: 0 0 6px;">SecureVote Online Democratic Voting System</p>
-                          <p style="margin: 0;">Designed for democratic transparency, cryptographic non-repudiation, and institutional trust.</p>
-                        </td>
-                      </tr>
+    // 11. Razorpay Nomination Fee Payment Confirmation (₹100)
+    public void sendPaymentConfirmationEmail(String toEmail, String candidateName, String candidateId, String electionId, String paymentId, String orderId, double amount, String paidAt) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("candidateName", candidateName);
+        vars.put("candidateId", candidateId);
+        vars.put("electionId", electionId);
+        vars.put("paymentId", paymentId);
+        vars.put("orderId", orderId);
+        vars.put("amount", String.format("%.2f", amount));
+        vars.put("paidAt", paidAt != null ? paidAt : LocalDateTime.now().format(FORMATTER));
+        sendTemplateEmail(toEmail, "💳 Payment Receipt: Nomination Security Deposit for " + electionId, "payment-confirmation", vars);
+    }
 
-                    </table>
-                  </td>
-                </tr>
-              </table>
-            </body>
-            </html>
-            """.formatted(candidate.getName(), candidate.getId(), linkedVoter, candidate.getName(), candidate.getEmail());
+    // 12. Vote Cast Confirmation (Zero Ballot Choice Disclosed)
+    public void sendVoteConfirmationEmail(String toEmail, String voterName, String voterId, String electionId, String electionTitle, String votedAt) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("voterName", voterName);
+        vars.put("voterId", voterId);
+        vars.put("electionId", electionId);
+        vars.put("electionTitle", electionTitle);
+        vars.put("votedAt", votedAt != null ? votedAt : LocalDateTime.now().format(FORMATTER));
+        sendTemplateEmail(toEmail, "🗳️ Vote Receipt: Ballot Confirmed for " + electionTitle + " (" + electionId + ")", "vote-confirmation", vars);
+    }
+
+    // 13. Forgot Password Reset Link (1-minute validity)
+    public void sendPasswordResetEmail(String toEmail, String recipientName, String resetUrl) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", recipientName);
+        vars.put("resetUrl", resetUrl);
+        vars.put("expiresInMinutes", 1);
+        vars.put("expiresAt", LocalDateTime.now().plusMinutes(1).format(FORMATTER));
+        sendTemplateEmail(toEmail, "🔑 Reset Your SecureVote Password (Expires in 1 Minute)", "password-reset", vars);
+    }
+
+    // 14. Password Reset Success (via reset link)
+    public void sendPasswordResetSuccessEmail(String toEmail, String recipientName, String userIdentifier, String timestamp) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", recipientName);
+        vars.put("userIdentifier", userIdentifier);
+        vars.put("timestamp", timestamp != null ? timestamp : LocalDateTime.now().format(FORMATTER));
+        sendTemplateEmail(toEmail, "✅ Password Successfully Reset — SecureVote", "password-reset-success", vars);
+    }
+
+    // 15. Password Updated Confirmation (in-app via OTP)
+    public void sendPasswordUpdatedEmail(String toEmail, String recipientName, String userIdentifier, String timestamp) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", recipientName);
+        vars.put("userIdentifier", userIdentifier);
+        vars.put("timestamp", timestamp != null ? timestamp : LocalDateTime.now().format(FORMATTER));
+        sendTemplateEmail(toEmail, "🔐 Password Successfully Changed — SecureVote", "password-updated", vars);
+    }
+
+    // 16. Email Address Updated Confirmation
+    public void sendEmailUpdatedEmail(String targetEmail, String recipientName, String oldEmail, String newEmail, String timestamp) {
+        Map<String, Object> vars = new HashMap<>();
+        vars.put("recipientName", recipientName);
+        vars.put("oldEmail", oldEmail);
+        vars.put("newEmail", newEmail);
+        vars.put("timestamp", timestamp != null ? timestamp : LocalDateTime.now().format(FORMATTER));
+        sendTemplateEmail(targetEmail, "📧 Registered Email Address Updated — SecureVote", "email-updated", vars);
     }
 }

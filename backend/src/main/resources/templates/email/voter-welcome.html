@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voter Registration Confirmed — SecureVote</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); padding: 32px 28px; text-align: center; color: #ffffff;">
+              <div style="font-size: 32px; margin-bottom: 8px;">🗳️</div>
+              <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.02em;">SecureVote</h1>
+              <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.9;">Online Democratic Voting Platform</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px 28px;">
+              <h2 style="margin: 0 0 12px; font-size: 20px; color: #0f172a; font-weight: 700;">
+                Welcome, <span th:text="${name}">Citizen</span>!
+              </h2>
+              <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #475569;">
+                Your voter registration has been successfully verified and activated. You are officially enrolled to cast your confidential ballot in all eligible elections.
+              </p>
+
+              <!-- Voter ID Callout -->
+              <div style="background-color: #eff6ff; border: 1.5px solid #bfdbfe; border-radius: 10px; padding: 20px; margin-bottom: 24px; text-align: center;">
+                <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #1e40af; letter-spacing: 0.08em; margin-bottom: 6px;">Your Official Voter ID</div>
+                <div style="font-size: 28px; font-weight: 800; color: #1d4ed8; letter-spacing: 0.05em; margin-bottom: 6px;" th:text="${voterId}">V1</div>
+                <div style="font-size: 12px; color: #64748b;">Use this Voter ID with your password to log in.</div>
+              </div>
+
+              <!-- Citizen Record Table -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px; font-size: 14px; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b; width: 40%;">Full Name:</td>
+                  <td style="padding: 10px 0; font-weight: 600; color: #0f172a;" th:text="${name}">Citizen Name</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Registered Email:</td>
+                  <td style="padding: 10px 0; color: #0f172a;" th:text="${email}">voter@example.com</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Date of Birth:</td>
+                  <td style="padding: 10px 0; color: #0f172a;" th:text="${dob}">2000-01-01</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Gender:</td>
+                  <td style="padding: 10px 0; color: #0f172a;" th:text="${gender}">Not specified</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Account Status:</td>
+                  <td style="padding: 10px 0; color: #15803d; font-weight: 700;">ACTIVE (Verified)</td>
+                </tr>
+              </table>
+
+              <!-- Security Reminder -->
+              <div style="background-color: #f8fafc; border-left: 4px solid #2563eb; padding: 14px 16px; border-radius: 4px; margin-bottom: 24px; font-size: 13px; color: #64748b; line-height: 1.5;">
+                <strong style="color: #0f172a;">Ballot Secrecy Guarantee:</strong> Your vote is strictly anonymous. SecureVote mathematically isolates voter identity from ballot tallies.
+              </div>
+
+              <!-- Action Button -->
+              <div style="text-align: center; margin-top: 24px;">
+                <a th:href="${loginUrl != null ? loginUrl : 'https://securevote-onlinevotingsystem.vercel.app/login?role=voter'}" style="display: inline-block; background-color: #2563eb; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(37,99,235,0.3);">
+                  Log in to Voter Portal &rarr;
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 18px 28px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8;">
+              <p style="margin: 0 0 4px;">SecureVote Online Democratic Voting System</p>
+              <p style="margin: 0;">Designed for democratic transparency, cryptographic non-repudiation, and institutional trust.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

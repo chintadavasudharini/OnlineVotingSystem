@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Candidate Registration Window Updated — SecureVote</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); padding: 32px 28px; text-align: center; color: #ffffff;">
+              <div style="font-size: 32px; margin-bottom: 8px;">⏱️</div>
+              <h1 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.02em;">SecureVote</h1>
+              <p style="margin: 6px 0 0; font-size: 13px; opacity: 0.9;">Schedule Revision Notification</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px 28px;">
+              <h2 style="margin: 0 0 10px; font-size: 18px; color: #0f172a; font-weight: 700;">
+                Attention: <span th:text="${recipientName}">Candidate</span>,
+              </h2>
+              <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #475569;">
+                The <strong>Candidate Registration Window</strong> for election <strong th:text="${electionId}">E1</strong> (<span th:text="${electionTitle}">Election Title</span>) has been revised by the Electoral Administration.
+              </p>
+
+              <!-- Comparison Table -->
+              <div style="background-color: #fff7ed; border: 1.5px solid #fed7aa; border-radius: 10px; padding: 18px; margin-bottom: 24px;">
+                <div style="margin-bottom: 12px;">
+                  <div style="font-size: 11px; font-weight: 700; color: #9a3412; text-transform: uppercase;">Previous Registration Window:</div>
+                  <div style="font-size: 13px; color: #9a3412; text-decoration: line-through;" th:text="${oldRegistrationPeriod}">Nov 01, 2026, 09:00 AM &rarr; Nov 01, 2026, 09:30 AM</div>
+                </div>
+                <div>
+                  <div style="font-size: 11px; font-weight: 700; color: #c2410c; text-transform: uppercase;">Updated Registration Window:</div>
+                  <div style="font-size: 14px; font-weight: 800; color: #7c2d12;" th:text="${newRegistrationPeriod}">Nov 01, 2026, 09:00 AM &rarr; Nov 01, 2026, 09:59 AM</div>
+                </div>
+              </div>
+
+              <p style="margin: 0 0 24px; font-size: 13px; color: #64748b; line-height: 1.5;">
+                Eligible candidates can file nominations, submit manifestos, and complete security deposits during this updated window.
+              </p>
+
+              <!-- Action Button -->
+              <div style="text-align: center;">
+                <a th:href="${viewUrl != null ? viewUrl : 'https://securevote-onlinevotingsystem.vercel.app/candidate/elections'}" style="display: inline-block; background-color: #ea580c; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(234,88,12,0.3);">
+                  View Election in Candidate Portal &rarr;
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 18px 28px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8;">
+              <p style="margin: 0 0 4px;">SecureVote Online Democratic Voting System</p>
+              <p style="margin: 0;">Designed for democratic transparency, cryptographic non-repudiation, and institutional trust.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

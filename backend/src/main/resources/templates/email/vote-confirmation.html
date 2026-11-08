@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vote Cast Confirmation — SecureVote</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #15803d 0%, #16a34a 100%); padding: 32px 28px; text-align: center; color: #ffffff;">
+              <div style="font-size: 32px; margin-bottom: 8px;">🗳️</div>
+              <h1 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.02em;">SecureVote</h1>
+              <p style="margin: 6px 0 0; font-size: 13px; opacity: 0.9;">Official Ballot Submission Receipt</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px 28px;">
+              <h2 style="margin: 0 0 10px; font-size: 18px; color: #0f172a; font-weight: 700;">
+                Ballot Confirmed, <span th:text="${voterName}">Voter</span>!
+              </h2>
+              <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #475569;">
+                Your secret ballot for election <strong th:text="${electionId}">E1</strong> (<span th:text="${electionTitle}">Election Title</span>) has been securely accepted, cryptographically committed, and added to the official tally ledger.
+              </p>
+
+              <!-- Success Card -->
+              <div style="background-color: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 20px; margin-bottom: 24px; text-align: center;">
+                <div style="font-size: 28px; margin-bottom: 6px;">✅</div>
+                <div style="font-size: 16px; font-weight: 800; color: #14532d; margin-bottom: 4px;">
+                  Ballot Successfully Recorded
+                </div>
+                <div style="font-size: 12px; color: #15803d;">
+                  Recorded at: <strong th:text="${votedAt}">Nov 01, 2026, 10:45 AM</strong>
+                </div>
+              </div>
+
+              <!-- Ballot Metadata -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px; font-size: 13px; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b; width: 40%;">Voter ID:</td>
+                  <td style="padding: 10px 0; font-weight: 700; color: #1d4ed8;" th:text="${voterId}">V1</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Election ID:</td>
+                  <td style="padding: 10px 0; font-weight: 600; color: #0f172a;" th:text="${electionId}">E1</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Election Name:</td>
+                  <td style="padding: 10px 0; color: #0f172a;" th:text="${electionTitle}">Student Council Election</td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; font-weight: 600; color: #64748b;">Ballot Status:</td>
+                  <td style="padding: 10px 0; color: #15803d; font-weight: 700;">FINAL & COMMITTED</td>
+                </tr>
+              </table>
+
+              <!-- Constitutional Ballot Secrecy Shield -->
+              <div style="background-color: #eff6ff; border-left: 4px solid #2563eb; padding: 14px 16px; border-radius: 4px; font-size: 12px; color: #475569; line-height: 1.55;">
+                <strong style="color: #1e40af;">🔒 Constitutional Ballot Secrecy:</strong> In strict compliance with democratic voting invariants, this receipt confirms your participation only. Your specific candidate choice is completely anonymized and dissociated from your citizen profile.
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 18px 28px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8;">
+              <p style="margin: 0 0 4px;">SecureVote Online Democratic Voting System</p>
+              <p style="margin: 0;">Designed for democratic transparency, cryptographic non-repudiation, and institutional trust.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

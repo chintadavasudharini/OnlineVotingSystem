@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Election Announced — SecureVote</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #0f766e 0%, #0d9488 100%); padding: 32px 28px; text-align: center; color: #ffffff;">
+              <div style="font-size: 32px; margin-bottom: 8px;">📢</div>
+              <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 0.02em;">SecureVote</h1>
+              <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.9;">Official Election Announcement</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px 28px;">
+              <h2 style="margin: 0 0 10px; font-size: 18px; color: #0f172a; font-weight: 700;">
+                Dear <span th:text="${recipientName}">Citizen</span>,
+              </h2>
+              <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #475569;">
+                A new democratic election has been scheduled and published by the Electoral Administration. Below are the official details and time windows:
+              </p>
+
+              <!-- Election Banner -->
+              <div style="background-color: #f0fdfa; border: 1.5px solid #99f6e4; border-radius: 10px; padding: 18px; margin-bottom: 24px;">
+                <div style="font-size: 12px; font-weight: 700; color: #0f766e; text-transform: uppercase; letter-spacing: 0.05em;" th:text="${electionId}">E1</div>
+                <div style="font-size: 20px; font-weight: 800; color: #134e4a; margin: 4px 0 8px;" th:text="${electionTitle}">General Election 2026</div>
+                <div style="font-size: 13px; color: #334155; line-height: 1.5;" th:text="${description}">Official democratic election for student representation.</div>
+              </div>
+
+              <!-- Schedule Windows -->
+              <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="margin-bottom: 24px; font-size: 13px; border-collapse: collapse;">
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 10px 0; font-weight: 600; color: #ea580c; width: 45%;">Candidate Registration:</td>
+                  <td style="padding: 10px 0; color: #0f172a; font-weight: 600;">
+                    <span th:text="${registrationStart}">Nov 01, 2026, 09:00 AM</span> &rarr; <span th:text="${registrationEnd}">Nov 01, 2026, 09:59 AM</span>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 10px 0; font-weight: 600; color: #16a34a;">Voting Window:</td>
+                  <td style="padding: 10px 0; color: #0f172a; font-weight: 600;">
+                    <span th:text="${votingStart}">Nov 01, 2026, 10:30 AM</span> &rarr; <span th:text="${votingEnd}">Nov 01, 2026, 11:00 AM</span>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Action Button -->
+              <div style="text-align: center; margin-top: 24px;">
+                <a th:href="${viewUrl != null ? viewUrl : 'https://securevote-onlinevotingsystem.vercel.app/elections'}" style="display: inline-block; background-color: #0d9488; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(13,148,136,0.3);">
+                  View Election Board &rarr;
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 18px 28px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8;">
+              <p style="margin: 0 0 4px;">SecureVote Online Democratic Voting System</p>
+              <p style="margin: 0;">Designed for democratic transparency, cryptographic non-repudiation, and institutional trust.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

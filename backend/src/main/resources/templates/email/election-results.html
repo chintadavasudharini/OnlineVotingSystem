@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Election Results Certified & Published — SecureVote</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #334155;">
+  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f1f5f9; padding: 30px 15px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 580px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08); border: 1px solid #e2e8f0;">
+          
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #15803d 0%, #16a34a 100%); padding: 32px 28px; text-align: center; color: #ffffff;">
+              <div style="font-size: 32px; margin-bottom: 8px;">📊</div>
+              <h1 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.02em;">SecureVote</h1>
+              <p style="margin: 6px 0 0; font-size: 13px; opacity: 0.9;">Official Election Results Certification</p>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px 28px;">
+              <h2 style="margin: 0 0 10px; font-size: 18px; color: #0f172a; font-weight: 700;">
+                Dear <span th:text="${recipientName}">Citizen</span>,
+              </h2>
+              <p style="margin: 0 0 20px; font-size: 14px; line-height: 1.6; color: #475569;">
+                The Super Administrator has officially certified and published the final election results for <strong th:text="${electionId}">E1</strong> (<span th:text="${electionTitle}">Election Title</span>).
+              </p>
+
+              <!-- Results Highlight Box -->
+              <div style="background-color: #f0fdf4; border: 1.5px solid #86efac; border-radius: 10px; padding: 20px; margin-bottom: 24px; text-align: center;">
+                <div style="font-size: 11px; font-weight: 700; color: #166534; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+                  Certified Winner / Status
+                </div>
+                <div style="font-size: 22px; font-weight: 800; color: #14532d; margin-bottom: 8px;" th:text="${winnerName}">
+                  C2 - Candidate Name
+                </div>
+                <div style="font-size: 12px; color: #15803d; font-weight: 600;">
+                  Total Voters: <span th:text="${totalVoters}">5,000</span> &bull; Total Votes Cast: <span th:text="${totalVotes}">4,250</span>
+                </div>
+              </div>
+
+              <p style="margin: 0 0 24px; font-size: 13px; color: #64748b; line-height: 1.5;">
+                You can view the certified tally percentages, verified candidate breakdown, and tie resolutions on the public results portal.
+              </p>
+
+              <!-- Action Button -->
+              <div style="text-align: center;">
+                <a th:href="${resultsUrl != null ? resultsUrl : 'https://securevote-onlinevotingsystem.vercel.app/elections'}" style="display: inline-block; background-color: #16a34a; color: #ffffff; text-decoration: none; padding: 12px 28px; border-radius: 8px; font-weight: 600; font-size: 14px; box-shadow: 0 2px 4px rgba(22,163,74,0.3);">
+                  View Certified Results & Tally &rarr;
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f8fafc; padding: 18px 28px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 11px; color: #94a3b8;">
+              <p style="margin: 0 0 4px;">SecureVote Online Democratic Voting System</p>
+              <p style="margin: 0;">Designed for democratic transparency, cryptographic non-repudiation, and institutional trust.</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
