@@ -3,6 +3,7 @@
 
 > **Author:** Chintada Vasudharini  
 > **Portfolio:** [https://chintadavasudharini-portfolio.vercel.app/](https://chintadavasudharini-portfolio.vercel.app/)  
+> **LinkedIn Article:** [Online Voting System Technical Article](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/)  
 > **Academic Context:** M.Tech in Artificial Intelligence & Data Science (AIDS) Academic Hackathon  
 > **Institution:** KL University (KLU), Vijayawada  
 > **Repository:** [https://github.com/chintadavasudharini/OnlineVotingSystem/](https://github.com/chintadavasudharini/OnlineVotingSystem/)  
@@ -1064,6 +1065,8 @@ Building SecureVote provided key software engineering takeaways:
 
 - 🌐 **Developer Portfolio:**  
   [https://chintadavasudharini-portfolio.vercel.app/](https://chintadavasudharini-portfolio.vercel.app/)
+- 📰 **LinkedIn Technical Architecture Article:**  
+  [https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/)
 - 💻 **GitHub Repository:**  
   [https://github.com/chintadavasudharini/OnlineVotingSystem/](https://github.com/chintadavasudharini/OnlineVotingSystem/)
 - 🌐 **Live Frontend Application (Vercel):**  
