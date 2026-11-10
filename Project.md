@@ -8,6 +8,16 @@
 **Live Web Application (Vercel):** [https://securevote-onlinevotingsystem.vercel.app/](https://securevote-onlinevotingsystem.vercel.app/)  
 **Live Production API (Render):** [https://securevote-onlinevotingsystem-backend.onrender.com](https://securevote-onlinevotingsystem-backend.onrender.com)
 
+### 📚 Comprehensive Technical Documentation Suite
+- 🖥️ **[Frontend Architecture (`frontend.md`)](./frontend.md)** — React 19, TypeScript, Vite 8, Zustand state, routing guards, OTP modals, and security settings.
+- ⚙️ **[Backend Architecture (`backend.md`)](./backend.md)** — Spring Boot 3.3.4, Java 21, Spring Security 6, dual-profile Admin, in-memory OTP/reset engines.
+- 🗄️ **[Database Specification (`database.md`)](./database.md)** — PostgreSQL 5-table schema, ER diagrams, anti-fraud composite constraints, zero-table ephemeral credentials.
+- 🛡️ **[Admin Operations (`admin.md`)](./admin.md)** — Dual-profile credentials (`dev` vs `prod`), election lifecycle governance, and audit trails.
+- 🗳️ **[Voter Guide (`voter.md`)](./voter.md)** — Citizen registration, 6-character 30s OTP, ballot casting, and account security.
+- 🏅 **[Candidate Guide (`candidate.md`)](./candidate.md)** — Candidate eligibility, Razorpay nomination fee, and manifesto publication.
+- 📧 **[Email & OTP Architecture (`Email Notifications & OTP.md`)](./Email%20Notifications%20&%20OTP.md)** — 16 Thymeleaf templates, 15 notification triggers, in-memory cleanup, and ballot secrecy.
+- 📰 **[LinkedIn Architecture Article (`LinkedIn_Article.md`)](./LinkedIn_Article.md)** — In-depth article detailing system invariants, anti-fraud barriers, and production deployment.
+
 [![Java 21](https://img.shields.io/badge/Language-Java%2021%20LTS-007396?style=flat-square&logo=openjdk&logoColor=white)](https://www.oracle.com/java/)
 [![Spring Boot 3.3.4](https://img.shields.io/badge/Framework-Spring%20Boot%203.3.4-6DB33F?style=flat-square&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![React 19](https://img.shields.io/badge/Frontend-React%2019-61DAFB?style=flat-square&logo=react&logoColor=black)](https://react.dev/)
@@ -194,15 +204,21 @@ flowchart TD
 | Operational Resource | HTTP Verb & URI | `ANONYMOUS` | `ROLE_VOTER` | `ROLE_CANDIDATE` | `ROLE_ADMIN` |
 |---|---|:---:|:---:|:---:|:---:|
 | System Discovery & Health | `GET /` | ✅ | ✅ | ✅ | ✅ |
+| Send Registration OTP | `POST /api/auth/register/send-otp` | ✅ | ❌ | ❌ | ❌ |
+| Verify Registration OTP | `POST /api/auth/register/verify-otp` | ✅ | ❌ | ❌ | ❌ |
 | User Registration | `POST /api/auth/register-voter` | ✅ | ❌ | ❌ | ❌ |
 | Candidate Elevation | `POST /api/auth/register-candidate` | ✅ | ✅ | ❌ | ❌ |
 | Universal Login | `POST /api/auth/login` | ✅ | ✅ | ✅ | ✅ |
+| Forgot Password Request | `POST /api/auth/forgot-password` | ✅ | ✅ | ✅ | ✅ |
+| Reset Password Token | `POST /api/auth/reset-password` | ✅ | ✅ | ✅ | ✅ |
 | Payment Gateway Config | `GET /api/payment/config` | ✅ | ✅ | ✅ | ✅ |
 | Create Razorpay Order | `POST /api/payment/create-order` | ❌ | ❌ | ✅ | ❌ |
 | Verify Razorpay Payment | `POST /api/payment/verify` | ❌ | ❌ | ✅ | ❌ |
 | Public Election List | `GET /api/elections` | ✅ | ✅ | ✅ | ✅ |
 | Election Details | `GET /api/elections/{id}` | ✅ | ✅ | ✅ | ✅ |
 | Create Election | `POST /api/elections` | ❌ | ❌ | ❌ | ✅ |
+| Update Election Schedule| `PUT /api/elections/{id}` | ❌ | ❌ | ❌ | ✅ |
+| Delete/Cancel Election | `DELETE /api/elections/{id}` | ❌ | ❌ | ❌ | ✅ |
 | Publish Results | `POST /api/elections/{id}/publish-results` | ❌ | ❌ | ❌ | ✅ |
 | Candidate Roster | `GET /api/candidates/election/{id}` | ✅ | ✅ | ✅ | ✅ |
 | File Nomination & Pay | `POST /api/candidates/register-for-election` | ❌ | ❌ | ✅ | ❌ |
@@ -213,6 +229,8 @@ flowchart TD
 | Certified Results | `GET /api/votes/results/{id}` | ✅* | ✅* | ✅* | ✅ |
 | Voter Directory | `GET /api/voters` | ❌ | ❌ | ❌ | ✅ |
 | Personal Profile | `GET /api/voters/profile` | ❌ | ✅ | ✅ | ✅ |
+| Update Password | `PUT /api/voters/profile/update-password` | ❌ | ✅ | ✅ | ✅ |
+| Update Email Address | `PUT /api/voters/profile/update-email` | ❌ | ✅ | ✅ | ✅ |
 | Audit Trail Ledger | `GET /api/audit-logs` | ❌ | ❌ | ❌ | ✅ |
 
 *\*Public and voters can view results once `resultsPublished == true`; Admins have unrestricted real-time access.*
@@ -467,6 +485,9 @@ ADD CONSTRAINT uk_users_email UNIQUE (email);
 
 | Threat Category | Attack Vector | Engineering Defense Implementation |
 |---|---|---|
+| **Production Credential Exposure** | Hardcoded demo credentials in prod | Dual-profile architecture (`dev` vs `prod`). Production strictly requires `ADMIN_USERNAME` and `ADMIN_PASSWORD` from backend env vars, strictly rejects `admin/admin`, and aborts startup if missing. |
+| **Credential Database Leakage** | SQL dump / backup exfiltration of OTPs | Zero-footprint ephemeral storage. OTPs and Password Reset tokens are hashed with SHA-256 and kept solely in JVM `ConcurrentHashMap` with automated 10s eviction. **Zero database tables added.** |
+| **OTP Brute-Force & Replay** | Automated code guessing | 6-character alternating alphanumeric format (`[A-Z][a-z][0-9][A-Z][a-z][0-9]`), 30-second TTL, maximum 5 attempts before revocation, and 5 requests/hour rolling limit. |
 | **Double Voting** | Concurrency / Replay / Multiple tabs | Database compound uniqueness `UNIQUE(election_id, voter_id)` + JPA isolated transactional checks. |
 | **Payment Spoofing** | Forged transaction IDs / Tampered payloads | Server-side Razorpay Order generation + HMAC-SHA256 signature verification using server secret key. |
 | **Credential Sniffing** | Eavesdropping / Brute Force | Passwords salted and hashed with adaptive `BCryptPasswordEncoder`. Plaintext credentials never persisted. |
@@ -767,7 +788,7 @@ ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"
 | `SPRING_MAIL_PASSWORD` | Web Service | Google App Password for OVS (16 characters) |
 | `VITE_API_BASE_URL` | Static Site | `https://securevote-onlinevotingsystem-backend.onrender.com/api` |
 
-> 📑 **Enterprise Email & Security Subsystem Specification:** For the complete architecture covering all 15 email notification types, 30-second cryptographic OTP generation, and 1-minute password reset recovery, see [`Email Notifications & OTP Implementation.md`](./Email%20Notifications%20&%20OTP%20Implementation.md).
+> 📑 **Enterprise Email & Security Subsystem Specification:** For the complete architecture covering all 15 email notification types, 30-second cryptographic OTP generation, and 1-minute password reset recovery, see [`Email Notifications & OTP.md`](./Email%20Notifications%20&%20OTP.md).
 
 ---
 
@@ -780,9 +801,13 @@ ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"
 +-----------------------+-----------------------------+---------------------------------+
 | Test Suite / Tool     | Target                      | Result Metric                   |
 +-----------------------+-----------------------------+---------------------------------+
-| Java Compiler (javac) | 46 Spring Boot Classes      | BUILD SUCCESS (0 Errors)        |
-| JUnit 5 / Spring Test | OnlineVotingSystemAppTests  | Tests run: 1, Failures: 0       |
+| Java Compiler (javac) | 50+ Spring Boot Classes     | BUILD SUCCESS (0 Errors)        |
+| JUnit 5 / Spring Test | Context & Entity Tests      | Tests run: 1, Failures: 0       |
+| JUnit 5 / Security    | AdminProfileSecurityTest    | Tests run: 10, Failures: 0      |
+| JUnit 5 / Audit & Mail| EmailAndOtpAuditTest        | Tests run: 7, Failures: 0       |
+| Total Backend Tests   | Complete Backend Suite      | 18 Executed, 0 Failures (PASS)  |
 | TypeScript Compiler   | frontend/src (React 19)     | Clean compilation (0 Errors)    |
+| Vite Bundler          | Production frontend build   | Built in 1.11s (0 Errors)       |
 | Static Linter (oxlint)| 42 Frontend source files    | 0 Errors, 0 Warnings            |
 | PostgreSQL Validation | Schema tables & constraints | 5 Tables, Unique Indices ACTIVE |
 +-----------------------+-----------------------------+---------------------------------+
@@ -801,7 +826,7 @@ The project root includes [`OnlineVotingSystem_Postman_Collection.json`](./Onlin
 git clone https://github.com/chintadavasudharini/OnlineVotingSystem.git
 cd OnlineVotingSystem
 
-# 2. Run backend (Spring Boot)
+# 2. Run backend (Spring Boot with dev profile)
 cd backend
 .\mvnw.cmd spring-boot:run
 
@@ -810,10 +835,15 @@ cd ../frontend
 npm run dev
 ```
 
-### Default Credentials:
-- **Super Administrator**: `admin` / `admin`
-- **Voter**: Register at `/register` ($\ge 18$ yrs)
-- **Candidate**: Elevate from Voter Profile ($\ge 25$ yrs)
+### Authentication Credentials & Profiles:
+* **Development (`dev` profile)**:
+  - Super Administrator: `admin` / `admin`
+  - Purpose: Local development, integration testing, and academic demonstrations.
+* **Production (`prod` profile)**:
+  - Super Administrator: Injected via `ADMIN_USERNAME` and `ADMIN_PASSWORD` environment variables.
+  - Startup Policy: Strictly validates that credentials are non-blank, $\ge 8$ chars, and strictly forbids `admin/admin`.
+* **Voter**: Register at `/register` ($\ge 18$ yrs) after 6-character 30s OTP verification.
+* **Candidate**: Elevate from Voter Profile ($\ge 25$ yrs) after OTP sent to linked voter email.
 
 ---
 

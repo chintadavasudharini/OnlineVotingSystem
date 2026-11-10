@@ -32,18 +32,47 @@ The **Super Administrator** (`ROLE_ADMIN`) possesses full executive governance o
 
 ---
 
-## 2. Dedicated Admin Console Access & Isolation
+## 2. Dedicated Admin Console Access & Dual-Profile Security
 
-To eliminate spoofing and privilege escalation risks, administrator login is strictly separated from public and voter endpoints:
+To eliminate spoofing and privilege escalation risks, administrator login is strictly separated from public and citizen endpoints:
 
 - **Dedicated Admin URL:** **`http://localhost:5174/admin`**
-- **Default System Credentials:**
-  - **Identifier:** `admin`
-  - **Password:** `admin`
 - **Security Boundaries:**
-  - Admin cannot be accessed from `/login` (which only services Voters and Candidates).
+  - Admin cannot authenticate from `/login` (which only services Voters and Candidates).
   - Admin credentials entered on voter or candidate login pages are rejected with an explicit security error.
-  - JWT Bearer tokens issued for `admin` carry the cryptographically signed claim `role: "ADMIN"`.
+  - JWT Bearer tokens issued for administrators carry the cryptographically signed claim `role: "ADMIN"`.
+  - Admin dashboard routes (`/admin/*`) are protected by Spring Security 6 RBAC (`ROLE_ADMIN`) and React SPA authorization guards.
+
+### Dual-Profile Configuration Architecture
+
+The system features automatic profile-based separation between local demonstrations and secure production environments:
+
+```mermaid
+flowchart TD
+    Boot[Spring Boot Startup] --> CheckProfile{Active Profile?}
+    
+    CheckProfile -->|dev| DevConfig[application-dev.properties]
+    DevConfig --> DevCreds["Username: admin<br/>Password: admin"]
+    DevCreds --> DevSuccess[Admin seeded / verified with BCrypt]
+    
+    CheckProfile -->|prod| ProdConfig[application-prod.properties]
+    ProdConfig --> CheckEnv{ADMIN_USERNAME & ADMIN_PASSWORD set?}
+    CheckEnv -->|No / Blank| Halt[Abort Startup: IllegalStateException]
+    CheckEnv -->|Set to admin/admin| HaltForbidden[Abort Startup: Forbidden Default Credentials]
+    CheckEnv -->|Valid & >= 8 chars| ProdSuccess[BCrypt Hash & Secure Admin Account]
+```
+
+| Setting / Parameter | Development Profile (`dev`) | Production Profile (`prod`) |
+| :--- | :--- | :--- |
+| **Profile Activation** | `spring.profiles.active=dev` | `SPRING_PROFILES_ACTIVE=prod` |
+| **Admin Username** | `admin` (Default demonstration) | `${ADMIN_USERNAME}` (Environment variable) |
+| **Admin Password** | `admin` (Default demonstration) | `${ADMIN_PASSWORD}` (Environment variable) |
+| **Fallback to `admin/admin`** | Allowed for local tests & demos | **Strictly Forbidden** (Fails startup) |
+| **Validation on Startup** | Standard BCrypt seed/verification | Strict non-empty, $\ge 8$ chars check |
+| **Credential Storage** | Salted BCrypt in `users` table | Salted BCrypt in `users` table |
+
+> [!IMPORTANT]
+> The demonstration credentials (`admin`/`admin`) remain fully functional in `dev` mode. In `prod`, the application will refuse to start if either `ADMIN_USERNAME` or `ADMIN_PASSWORD` is missing, blank, or equals `"admin"`.
 
 ---
 
@@ -171,19 +200,32 @@ Every security-sensitive system mutation is permanently recorded in PostgreSQL:
 
 ## 9. Integration & Configuration Governance
 
-Administrators manage critical backend integration environment variables:
+Administrators manage backend integration variables and profile activation:
 
 ```bash
-# PostgreSQL Connection
+# ------------------------------------------------------------------
+# Production Profile & Admin Credentials
+# ------------------------------------------------------------------
+SPRING_PROFILES_ACTIVE=prod
+ADMIN_USERNAME=secure_admin_username
+ADMIN_PASSWORD=SuperSecurePassword#2026!
+
+# ------------------------------------------------------------------
+# PostgreSQL Connection (Strictly 5 Tables Baseline)
+# ------------------------------------------------------------------
 SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/voting_db
 SPRING_DATASOURCE_USERNAME=postgres
 SPRING_DATASOURCE_PASSWORD=root
 
+# ------------------------------------------------------------------
 # Razorpay Payment Gateway (Nomination Deposit)
+# ------------------------------------------------------------------
 RAZORPAY_KEY_ID=rzp_test_TuHZ9A0hAgLC6b
 RAZORPAY_KEY_SECRET=ayeQXttS95jNOJgxfD75ni2S
 
-# Gmail SMTP Mail Service (App Passwords)
+# ------------------------------------------------------------------
+# Gmail SMTP Mail Service (16 Templates, 15 Triggers)
+# ------------------------------------------------------------------
 SPRING_MAIL_USERNAME=vasu.demoprojects@gmail.com
 SPRING_MAIL_PASSWORD=vplosquxxhbmrybi
 ```
@@ -192,8 +234,18 @@ SPRING_MAIL_PASSWORD=vplosquxxhbmrybi
 
 ## 10. Administrator Security Checklist
 
-- [ ] **Credential Rotation:** Regularly update default administrator credentials in production.
+- [ ] **Production Profile Active:** Ensure `SPRING_PROFILES_ACTIVE=prod` is set in production deployment containers.
+- [ ] **Strong Production Credentials:** Ensure `ADMIN_USERNAME` and `ADMIN_PASSWORD` are set via cloud secret managers and never default to `admin/admin`.
 - [ ] **Audit Trail Monitoring:** Periodically review `/admin/audit-logs` for anomalous login patterns or failed authentication spikes.
+- [ ] **Ephemeral Engine Health:** Verify scheduled cleanup (every 10 seconds) purges expired in-memory OTPs (30s TTL) and password reset tokens (60s TTL).
 - [ ] **Election Schedule Verification:** Ensure registration and voting time windows do not overlap incorrectly prior to publishing.
 - [ ] **Results Certification:** Validate candidate tallies before executing the irreversible "Publish Results" action.
-- [ ] **Database Backups:** Maintain automated PostgreSQL pg_dump snapshot schedules for disaster recovery.
+- [ ] **Database Backups:** Maintain automated PostgreSQL `pg_dump` snapshot schedules for the 5 core tables.
+
+---
+
+## 11. Cross-Reference Documentation
+- 🖥️ **[Frontend Architecture (`frontend.md`)](./frontend.md)** — React 19 UI and Admin console components.
+- ⚙️ **[Backend Architecture (`backend.md`)](./backend.md)** — Spring Security 6, controllers, services, and tests.
+- 🗄️ **[Database Specification (`database.md`)](./database.md)** — 5-table PostgreSQL schema and indexes.
+- 📧 **[Email & OTP Architecture (`Email Notifications & OTP.md`)](./Email%20Notifications%20&%20OTP.md)** — 16 Thymeleaf templates and 15 triggers.

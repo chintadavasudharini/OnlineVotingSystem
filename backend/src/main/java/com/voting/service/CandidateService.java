@@ -34,6 +34,9 @@ public class CandidateService {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private EmailService emailService;
+
     @Transactional
     public CandidateRegistration registerForElection(String candidateId, CandidateElectionRegisterRequest request) {
         User candidate = userRepository.findByIdIgnoreCase(candidateId)
@@ -84,6 +87,27 @@ public class CandidateService {
                 "Election Registration & Payment",
                 candidateId + " (" + candidate.getName() + ") registered for election " + election.getId() +
                         " with Razorpay Payment " + paymentId + " (₹" + reg.getPaymentAmount() + ")"
+        );
+
+        emailService.sendCandidateElectionRegistrationEmail(
+                candidate.getEmail(),
+                candidate.getName(),
+                candidate.getId(),
+                election.getId(),
+                election.getTitle(),
+                reg.getManifestoTitle(),
+                null
+        );
+
+        emailService.sendPaymentConfirmationEmail(
+                candidate.getEmail(),
+                candidate.getName(),
+                candidate.getId(),
+                election.getId(),
+                paymentId,
+                reg.getOrderId(),
+                reg.getPaymentAmount(),
+                null
         );
 
         return saved;

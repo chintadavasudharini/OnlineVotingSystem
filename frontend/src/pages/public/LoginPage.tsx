@@ -247,9 +247,22 @@ export const LoginPage: React.FC = () => {
 
             {/* Password */}
             <div className="form-group">
-              <label className="form-label" htmlFor="password">
-                Password
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                <label className="form-label" htmlFor="password" style={{ marginBottom: 0 }}>
+                  Password
+                </label>
+                <Link
+                  to="/forgot-password"
+                  style={{
+                    fontSize: '0.8rem',
+                    color: '#2563eb',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                  }}
+                >
+                  Forgot Password?
+                </Link>
+              </div>
               <div className="password-input-wrapper">
                 <input
                   id="password"

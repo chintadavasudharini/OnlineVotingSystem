@@ -24,10 +24,21 @@
 [🚀 Live Web Application (Vercel)](https://securevote-onlinevotingsystem.vercel.app/) •
 [🌐 Live Backend API (Render)](https://securevote-onlinevotingsystem-backend.onrender.com) •
 [Explore Repository](https://github.com/chintadavasudharini/OnlineVotingSystem) •
-[📖 Deep-Dive Technical Dossier](PROJECT_DETAILS.md) •
+[📖 Deep-Dive Technical Dossier](Project.md) •
 [📰 LinkedIn Article](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/) •
 [Report Bug](https://github.com/chintadavasudharini/OnlineVotingSystem/issues) •
 [Request Feature](https://github.com/chintadavasudharini/OnlineVotingSystem/pulls)
+
+### 📚 Dedicated Technical Documentation
+- 📑 **[Project Specification (`Project.md`)](./Project.md)** — Comprehensive technical dossier, end-to-end system invariants, and state machines.
+- 🖥️ **[Frontend Architecture (`frontend.md`)](./frontend.md)** — React 19, Vite 8, Zustand stores, route hierarchy, OTP modals, and security settings.
+- ⚙️ **[Backend Architecture (`backend.md`)](./backend.md)** — Spring Boot 3.3.4, Java 21, Spring Security 6, dual-profile Admin, in-memory OTP/reset engines.
+- 🗄️ **[Database Specification (`database.md`)](./database.md)** — PostgreSQL 5-table schema, ER diagrams, anti-fraud composite constraints, zero-table ephemeral credentials.
+- 🛡️ **[Admin Operations (`admin.md`)](./admin.md)** — Dual-profile credentials (`dev` vs `prod`), election lifecycle governance, and audit trails.
+- 🗳️ **[Voter Guide (`voter.md`)](./voter.md)** — Citizen registration, 6-character 30s OTP, ballot casting, and account security.
+- 🏅 **[Candidate Guide (`candidate.md`)](./candidate.md)** — Candidate eligibility, Razorpay nomination fee, and manifesto publication.
+- 📧 **[Email & OTP Architecture (`Email Notifications & OTP.md`)](./Email%20Notifications%20&%20OTP.md)** — 16 Thymeleaf templates, 15 notification triggers, in-memory cleanup, and ballot secrecy.
+- 📰 **[LinkedIn Architecture Article (`LinkedIn_Article.md`)](./LinkedIn_Article.md)** — Deep-dive publication on system invariants, zero double-voting, and digital balloting.
 
 </div>
 
@@ -68,11 +79,13 @@ Democratic integrity requires software systems to guarantee four non-negotiable 
 
 | Invariant / Feature | Technical Implementation |
 |---|---|
+| **Dual-Profile Admin Security** | Separates local development (`dev` profile with demo `admin`/`admin`) from production (`prod` profile requiring strong `ADMIN_USERNAME` and `ADMIN_PASSWORD` from backend env vars, strictly rejecting `admin/admin` and failing startup if missing). |
+| **Zero-Footprint Ephemeral Security** | OTPs (30s TTL, 6-char `[A-Z][a-z][0-9][A-Z][a-z][0-9]`) and Password Reset tokens (60s TTL, 32-byte cryptographic token) reside solely in Java `ConcurrentHashMap` with automated 10-second eviction. **Zero database tables added.** |
 | **Zero Double-Voting** | Multi-layer barrier: JPA pre-check (`!hasVoted`) combined with PostgreSQL composite unique key constraint `UNIQUE(election_id, voter_id)`. Rejects duplicate attempts atomically even under high concurrency. |
 | **Candidate Nomination Security Deposit** | Built-in **Razorpay Gateway** integration requiring a ₹100 deposit (10000 paise) before candidacy confirmation, validated server-side via HMAC-SHA256 signature verification. |
 | **Constitutional Age Separation** | Enforces constitutional age eligibility: Voters must be $\ge 18$ years. Candidates must be $\ge 25$ years and possess a verified lineage to an active voter identity (`voter_id`). |
 | **Demographic Inclusivity (Gender Recognition)** | First-class gender capture (`Male`, `Female`, `Other`) immediately after Date of Birth on registration, stored in PostgreSQL, and reflected across Voter Profile and Admin Roster. |
-| **Centralized Email Notification Engine** | Powered by **Spring Boot Mail** & **Gmail SMTP (TLS 587)** using Google App Passwords; delivers branded, responsive HTML confirmation emails with auto-generated Voter/Candidate IDs asynchronously via `CompletableFuture`. |
+| **Centralized Email Notification Engine** | Powered by **Spring Boot Mail**, **Thymeleaf (16 responsive HTML templates)** & **Gmail SMTP (TLS 587)** delivering 15 distinct notification events asynchronously via `CompletableFuture.runAsync()`. Vote confirmations preserve complete ballot secrecy (zero candidate choice exposed). |
 | **Elected Candidate & Dynamic Tie Detection** | Certified election cards dynamically identify the top vote tally: single winner is rendered inside a **Green Elected Candidate card** (`🟩`), while multi-candidate deadlocks are isolated in a **Yellow Tie Result card** (`🟨`) detailing exact candidate tallies. |
 | **Strict Role-Isolated Authentication** | Dedicated, role-enforced login portals (`/login?role=voter` with Voter ID vs `/login?role=candidate` with Candidate ID vs `/admin` Admin Console) preventing cross-persona credential access. |
 | **Time-Locked Lifecycles** | Election states (`UPCOMING`, `REGISTRATION_OPEN`, `VOTING_OPEN`, `COMPLETED`, `RESULTS_PUBLISHED`) are calculated deterministically on-the-fly from atomic timestamps. |
@@ -299,25 +312,31 @@ Base URL:
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `POST` | `/api/auth/login` | Public | Authenticates user (Admin, Voter, Candidate) with strict role isolation and issues JWT Bearer token |
+| `POST` | `/api/auth/register/send-otp` | Public | Sends a 6-character cryptographic OTP (valid 30s) to email for registration verification |
+| `POST` | `/api/auth/register/verify-otp` | Public | Atomically validates 6-character OTP with brute-force threshold (max 5 attempts) |
 | `POST` | `/api/auth/register-voter` | Public | Enrolls voter ($\ge 18$ yrs with DOB & Gender), auto-generates Voter ID (`V1`, `V2`...), and triggers async confirmation email |
 | `POST` | `/api/auth/register-candidate` | Public | Elevates verified voter ($\ge 25$ yrs) to Candidate (`C1`, `C2`...), and triggers async confirmation email |
+| `POST` | `/api/auth/forgot-password` | Public | Dispatches single-use password recovery link (valid 1 minute) via `password-reset.html` |
+| `POST` | `/api/auth/reset-password` | Public | Consumes single-use 32-byte cryptographic token and updates password with BCrypt |
 
-> 📑 **Full Email, OTP & Recovery Subsystem:** See [`Email Notifications & OTP Implementation.md`](./Email%20Notifications%20&%20OTP%20Implementation.md) for the specification covering all 15 notification types, 30-second cryptographic OTP verification, and 1-minute password reset tokens.
+> 📑 **Full Email, OTP & Recovery Subsystem:** See [`Email Notifications & OTP.md`](./Email%20Notifications%20&%20OTP.md) for the specification covering all 15 notification types, 30-second cryptographic OTP verification, and 1-minute password reset tokens.
 
 ### 3. Payment Gateway (Razorpay)
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `GET` | `/api/payment/config` | Public | Returns Razorpay public Key ID, currency, and nomination fee (₹100) |
 | `POST` | `/api/payment/create-order` | `ROLE_CANDIDATE` | Generates a verified Razorpay Order for nomination security deposit |
-| `POST` | `/api/payment/verify` | `ROLE_CANDIDATE` | Cryptographically verifies HMAC-SHA256 Razorpay payment signature |
+| `POST` | `/api/payment/verify` | `ROLE_CANDIDATE` | Cryptographically verifies HMAC-SHA256 Razorpay payment signature and sends receipt email |
 
 ### 4. Election Management
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `GET` | `/api/elections` | Public | Lists all elections with dynamic real-time status calculation |
 | `GET` | `/api/elections/{id}` | Public | Fetches detailed election metadata by ID |
-| `POST` | `/api/elections` | `ROLE_ADMIN` | Creates new election with strict timestamp bounds |
-| `POST` | `/api/elections/{id}/publish-results` | `ROLE_ADMIN` | Certifies and publishes official election results |
+| `POST` | `/api/elections` | `ROLE_ADMIN` | Creates new election with strict timestamp bounds & broadcasts announcement email |
+| `PUT` | `/api/elections/{id}` | `ROLE_ADMIN` | Modifies election schedule and sends date modification alerts to voters/candidates |
+| `DELETE` | `/api/elections/{id}` | `ROLE_ADMIN` | Cancels election and broadcasts cancellation notification |
+| `POST` | `/api/elections/{id}/publish-results` | `ROLE_ADMIN` | Certifies and publishes official election results & broadcasts winner emails |
 
 ### 5. Candidate Operations
 | Method | Endpoint | Access | Description |
@@ -330,16 +349,18 @@ Base URL:
 ### 6. Balloting & Tallies
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
-| `POST` | `/api/votes/cast` | `ROLE_VOTER` | Submits atomic vote during `VOTING_OPEN` window |
+| `POST` | `/api/votes/cast` | `ROLE_VOTER` | Submits atomic vote during `VOTING_OPEN` window & dispatches secret vote confirmation email |
 | `GET` | `/api/votes/has-voted/{id}` | `ROLE_VOTER` | Checks if voter has already participated in election |
 | `GET` | `/api/votes/results/{id}` | Public / Admin | Aggregates and ranks vote counts & percentages |
 
-### 7. Audit & Administration
+### 7. Audit, Profile & Account Security
 | Method | Endpoint | Access | Description |
 |---|---|---|---|
 | `GET` | `/api/audit-logs` | `ROLE_ADMIN` | Inspects full chronological compliance audit trail |
 | `GET` | `/api/voters` | `ROLE_ADMIN` | Lists all registered voters in system |
 | `GET` | `/api/voters/profile` | Authenticated | Fetches profile of current session user |
+| `PUT` | `/api/voters/profile/update-password` | Authenticated | Updates account password (requires old password verification and optional OTP confirmation) |
+| `PUT` | `/api/voters/profile/update-email` | Authenticated | Updates account email (requires 30s OTP sent to new address) |
 
 ---
 
@@ -452,21 +473,33 @@ The project includes built-in containerization support for one-click deployment 
 
 ---
 
-## 12. Default Credentials & Test Accounts
+## 12. Authentication Credentials & Profiles
+
+### Dual-Profile Admin Security Configuration
+The application supports two distinct authentication setups configured through Spring Boot profiles:
+
+| Environment Profile | Activation | Username | Password | Startup Policy |
+| :--- | :--- | :--- | :--- | :--- |
+| **Development (`dev`)** | `spring.profiles.active=dev` | `admin` | `admin` | Default demonstration mode. Retains `admin`/`admin` for academic/local testing. |
+| **Production (`prod`)** | `SPRING_PROFILES_ACTIVE=prod` | `${ADMIN_USERNAME}` | `${ADMIN_PASSWORD}` | **Strictly enforced**. Requires environment variables. Startup fails if missing, empty, or set to `admin/admin`. Minimum 8 characters. |
+
+### Persona Credentials Reference
 
 | Persona | Identifier / Username | Password | Role | Notes |
 |---|---|---|---|---|
-| **Super Admin** | `admin` | `admin` | `ADMIN` | Pre-seeded root administrator with full election lifecycle control |
-| **Voter** | Self-registered (e.g. `V1`) | Custom | `VOTER` | Enrolls at `/register` ($\ge 18$ yrs). Eligible to cast 1 vote per election |
-| **Candidate** | Self-registered (e.g. `C1`) | Custom | `CANDIDATE` | Enrolls from Voter Profile ($\ge 25$ yrs). Submits manifesto & Razorpay deposit |
+| **Super Admin (Dev)** | `admin` | `admin` | `ADMIN` | Pre-seeded root administrator for local development and demonstration |
+| **Super Admin (Prod)** | Environment variable | Environment variable | `ADMIN` | Injected via secure secrets management (`ADMIN_USERNAME`, `ADMIN_PASSWORD`) |
+| **Voter** | Self-registered (e.g. `V1`) | Custom (BCrypt) | `VOTER` | Enrolls at `/register` ($\ge 18$ yrs) after 6-char 30s OTP verification. Eligible to cast 1 vote per election |
+| **Candidate** | Self-registered (e.g. `C1`) | Custom (BCrypt) | `CANDIDATE` | Enrolls from Voter Profile ($\ge 25$ yrs) after OTP sent to voter email. Submits manifesto & Razorpay deposit |
 
 ---
 
 ## 13. Automated Testing, Postman Collection & Quality
 
-### 1. Build Verification
+### 1. Build Verification & Test Suite
+The automated test suite verifies profile segregation, security constraints, and ephemeral storage operations:
 ```bash
-# Backend integration test suite
+# Backend integration test suite (18 tests passing, BUILD SUCCESS)
 cd backend
 .\mvnw.cmd test
 
@@ -476,6 +509,14 @@ npm run build
 # Static analysis and TypeScript validation
 npm run lint
 ```
+
+| Test Class | Focus Area | Status |
+| :--- | :--- | :---: |
+| `OnlineVotingSystemApplicationTests` | Context loading, entity mappings, JPA repositories | **PASS** |
+| `AdminProfileSecurityTest` | Dev profile `admin/admin` login, Prod env var validation, rejection of default credentials, startup halts on missing env vars | **PASS** |
+| `EmailAndOtpAuditTest` | In-memory 30s OTP lifecycle, 60s single-use reset tokens, 10s eviction scheduler, 16 Thymeleaf template renders, ballot secrecy guarantee | **PASS** |
+
+**Test Metric**: **18 executed, 0 failures, 0 skipped. BUILD SUCCESS.**
 
 ### 2. Postman API Testing
 An enterprise Postman collection is included in the root directory:  

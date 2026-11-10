@@ -22,7 +22,7 @@ import java.util.concurrent.CompletableFuture;
 public class EmailService {
 
     private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy, hh:mm a");
+    public static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("MMM dd, yyyy, hh:mm a");
 
     @Autowired(required = false)
     private JavaMailSender mailSender;
@@ -69,12 +69,16 @@ public class EmailService {
 
     // 1. OTP Verification Email (30-second validity)
     public void sendOtpEmail(String toEmail, String name, String otp, String purpose) {
+        sendOtpEmail(toEmail, name, otp, purpose, 30);
+    }
+
+    public void sendOtpEmail(String toEmail, String name, String otp, String purpose, int validitySeconds) {
         Map<String, Object> vars = new HashMap<>();
         vars.put("name", name != null ? name : "Citizen");
         vars.put("otp", otp);
         vars.put("purpose", purpose);
-        vars.put("validitySeconds", 30);
-        vars.put("expiresAt", LocalDateTime.now().plusSeconds(30).format(FORMATTER));
+        vars.put("validitySeconds", validitySeconds);
+        vars.put("expiresAt", LocalDateTime.now().plusSeconds(validitySeconds).format(FORMATTER));
         sendTemplateEmail(toEmail, "🔐 Your SecureVote Verification Code: " + otp, "otp-verification", vars);
     }
 

@@ -4,6 +4,8 @@ import com.voting.dto.ElectionRequest;
 import com.voting.dto.ElectionResponse;
 import com.voting.entity.Election;
 import com.voting.entity.Role;
+import com.voting.entity.User;
+import com.voting.entity.CandidateRegistration;
 import com.voting.repository.CandidateRegistrationRepository;
 import com.voting.repository.ElectionRepository;
 import com.voting.repository.UserRepository;
@@ -33,6 +35,15 @@ public class ElectionService {
 
     @Autowired
     private AuditService auditService;
+
+    @Autowired
+    private EmailService emailService;
+
+    private List<User> getNotificationRecipients() {
+        return userRepository.findAll().stream()
+                .filter(u -> u.getRole() == Role.VOTER || u.getRole() == Role.CANDIDATE)
+                .collect(Collectors.toList());
+    }
 
     public String calculateElectionStatus(Election election) {
         LocalDateTime now = LocalDateTime.now();
@@ -123,6 +134,21 @@ public class ElectionService {
                 "Created election " + id + " (" + saved.getTitle() + ")"
         );
 
+        List<User> recipients = getNotificationRecipients();
+        for (User u : recipients) {
+            emailService.sendNewElectionEmail(
+                    u.getEmail(),
+                    u.getName(),
+                    saved.getId(),
+                    saved.getTitle(),
+                    saved.getDescription(),
+                    saved.getRegistrationStart().format(EmailService.FORMATTER),
+                    saved.getRegistrationEnd().format(EmailService.FORMATTER),
+                    saved.getVotingStart().format(EmailService.FORMATTER),
+                    saved.getVotingEnd().format(EmailService.FORMATTER)
+            );
+        }
+
         return mapToResponse(saved);
     }
 
@@ -151,6 +177,11 @@ public class ElectionService {
             throw new IllegalArgumentException("Voting end time must be after voting start time.");
         }
 
+        LocalDateTime oldRegStart = election.getRegistrationStart();
+        LocalDateTime oldRegEnd = election.getRegistrationEnd();
+        LocalDateTime oldVoteStart = election.getVotingStart();
+        LocalDateTime oldVoteEnd = election.getVotingEnd();
+
         election.setTitle(request.getTitle().trim());
         election.setDescription(request.getDescription() != null ? request.getDescription().trim() : "");
         election.setRegistrationStart(request.getRegistrationStart());
@@ -166,6 +197,26 @@ public class ElectionService {
                 "Update Election",
                 "Updated election " + id + " (" + updated.getTitle() + ")"
         );
+
+        boolean regChanged = !oldRegStart.equals(updated.getRegistrationStart()) || !oldRegEnd.equals(updated.getRegistrationEnd());
+        boolean voteChanged = !oldVoteStart.equals(updated.getVotingStart()) || !oldVoteEnd.equals(updated.getVotingEnd());
+
+        List<User> recipients = getNotificationRecipients();
+        String oldRegPeriod = oldRegStart.format(EmailService.FORMATTER) + " to " + oldRegEnd.format(EmailService.FORMATTER);
+        String newRegPeriod = updated.getRegistrationStart().format(EmailService.FORMATTER) + " to " + updated.getRegistrationEnd().format(EmailService.FORMATTER);
+        String oldVotePeriod = oldVoteStart.format(EmailService.FORMATTER) + " to " + oldVoteEnd.format(EmailService.FORMATTER);
+        String newVotePeriod = updated.getVotingStart().format(EmailService.FORMATTER) + " to " + updated.getVotingEnd().format(EmailService.FORMATTER);
+
+        for (User u : recipients) {
+            if (regChanged && !voteChanged) {
+                emailService.sendRegistrationPeriodUpdateEmail(u.getEmail(), u.getName(), updated.getId(), updated.getTitle(), oldRegPeriod, newRegPeriod);
+            } else if (voteChanged && !regChanged) {
+                emailService.sendVotingPeriodUpdateEmail(u.getEmail(), u.getName(), updated.getId(), updated.getTitle(), oldVotePeriod, newVotePeriod);
+            } else {
+                String summary = "Election schedule and timeline dates have been revised by the election commission.";
+                emailService.sendElectionScheduleUpdateEmail(u.getEmail(), u.getName(), updated.getId(), updated.getTitle(), summary, newRegPeriod, newVotePeriod);
+            }
+        }
 
         return mapToResponse(updated);
     }
@@ -196,6 +247,18 @@ public class ElectionService {
                 "Delete Election",
                 "Deleted election " + id + " (" + election.getTitle() + ")"
         );
+
+        List<User> recipients = getNotificationRecipients();
+        for (User u : recipients) {
+            emailService.sendElectionDeletedEmail(
+                    u.getEmail(),
+                    u.getName(),
+                    election.getId(),
+                    election.getTitle(),
+                    LocalDateTime.now().format(EmailService.FORMATTER),
+                    "Administrative cancellation by election commission"
+            );
+        }
     }
 
     @Transactional
@@ -210,6 +273,34 @@ public class ElectionService {
                 "Publish Results",
                 "Certified and published results for election " + electionId + " (" + election.getTitle() + ")"
         );
+
+        long totalVotes = voteRepository.countByElectionId(electionId);
+        long totalVoters = userRepository.countByRole(Role.VOTER);
+        List<CandidateRegistration> regs = candidateRegistrationRepository.findByElectionId(electionId);
+        String winner = "No votes cast";
+        long maxVotes = -1;
+        for (CandidateRegistration reg : regs) {
+            long count = voteRepository.countByElectionIdAndCandidateId(electionId, reg.getCandidateId());
+            if (count > maxVotes && count > 0) {
+                maxVotes = count;
+                winner = userRepository.findByIdIgnoreCase(reg.getCandidateId()).map(User::getName).orElse(reg.getCandidateId());
+            } else if (count == maxVotes && count > 0) {
+                winner += " (Tie)";
+            }
+        }
+
+        List<User> recipients = getNotificationRecipients();
+        for (User u : recipients) {
+            emailService.sendElectionResultsEmail(
+                    u.getEmail(),
+                    u.getName(),
+                    election.getId(),
+                    election.getTitle(),
+                    String.valueOf(totalVoters),
+                    String.valueOf(totalVotes),
+                    winner
+            );
+        }
 
         return mapToResponse(updated);
     }

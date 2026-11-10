@@ -55,27 +55,39 @@ To prevent fraudulent or phantom candidacies, **SecureVote** enforces strict con
    - Voter ID exists and has role `VOTER`.
    - Voter's verified age is $\ge 25$ years.
    - No pre-existing candidate account is linked to this Voter ID.
-4. An official **Candidate ID** is allocated (e.g., `C1`).
-5. An automated welcome email is dispatched to your registered address.
+4. **6-Character OTP Verification**:
+   - The system dispatches a 6-character cryptographic OTP (`[A-Z][a-z][0-9][A-Z][a-z][0-9]`, valid 30 seconds) to the citizen's registered voter email address.
+   - The candidate enters the code in `OtpModal.tsx` (30s live countdown, 30s cooldown, max 5 attempts).
+5. On successful OTP verification:
+   - Official **Candidate ID** is allocated (e.g., `C1`).
+   - Automated welcome email (`candidate-welcome.html`) is dispatched via Gmail SMTP.
+   - Account is activated in PostgreSQL (`users` table).
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor C as Eligible Citizen
-    participant UI as React Client
+    participant UI as React Client (OtpModal)
     participant API as Spring Boot Backend
-    participant DB as PostgreSQL
-    participant Mail as Gmail SMTP
+    participant OtpEngine as Ephemeral OtpStorageService (RAM)
+    participant DB as PostgreSQL (5 Tables)
+    participant Mail as Gmail SMTP (TLS 587)
 
     C->>UI: Submit Candidate Registration (Voter ID + Password)
-    UI->>API: POST /api/auth/register-candidate
-    API->>DB: Query User by Voter ID
-    API->>API: Verify Age >= 25 years
-    API->>DB: Verify no duplicate Candidate account
-    API->>DB: Generate Next Candidate ID (e.g. C1)
+    UI->>API: POST /api/auth/register/send-otp {email: voterEmail, purpose: "CANDIDATE_REGISTRATION"}
+    API->>OtpEngine: Store SHA-256 hash of 6-char OTP (30s TTL)
+    API--)Mail: Dispatch OTP Email (otp-verification.html)
+    API-->>UI: OTP Dispatched (200 OK)
+    UI-->>C: Display OtpModal (30s countdown)
+    C->>UI: Enters 6-char OTP
+    UI->>API: POST /api/auth/register/verify-otp {otp, purpose}
+    API->>OtpEngine: Verify SHA-256 hash
+    API-->>UI: OTP Verified (200 OK)
+    UI->>API: POST /api/auth/register-candidate {voterId, password}
+    API->>DB: Query User by Voter ID & verify Age >= 25
     API->>DB: Insert User (role: CANDIDATE, voter_id: V1)
     API->>DB: Insert Audit Log ("C1 created Candidate account")
-    API--)Mail: Dispatch async Welcome Email with Candidate ID (C1)
+    API--)Mail: Dispatch Welcome Email (candidate-welcome.html)
     API-->>UI: Return JWT Bearer token & Candidate ID
     UI-->>C: Redirect to Candidate Portal with Success Confirmation
 ```
@@ -217,3 +229,29 @@ A: Your nomination is not filed until payment is confirmed. You can immediately 
 
 **Q: Can I edit my manifesto after submitting?**  
 A: To maintain democratic trust and prevent misleading voters, manifestos are locked once submitted and accepted.
+
+---
+
+## 11. Account Security & Automated Email Notifications
+
+### Account Security Management
+From the Candidate Profile, candidates can access **Account Security**:
+* **Update Password**: Requires current password and BCrypt hashing of new password ($\ge 6$ chars), confirmed via `password-updated.html`.
+* **Update Contact Email**: Verified via 6-character OTP (30-second TTL) sent to the new email address, with change alerts sent via `email-updated.html`.
+* **Password Reset**: Self-service recovery at `/forgot-password` generates a single-use 32-byte token (valid 1 minute) sent via `password-reset.html`.
+
+### Automated Email Notifications Received by Candidates:
+1. `candidate-welcome.html` — Account creation and Candidate ID assignment.
+2. `candidate-registration.html` — Election nomination confirmation.
+3. `payment-confirmation.html` — Razorpay deposit receipt.
+4. `election-schedule-update.html` — Alerts when an election date or time changes.
+5. `registration-period-update.html` — Alerts when candidate registration window is adjusted.
+6. `election-results.html` — Certified outcome and winner announcement.
+
+---
+
+## 12. Cross-Reference Documentation
+- 🖥️ **[Frontend Architecture (`frontend.md`)](./frontend.md)** — React 19 UI, OtpModal, Razorpay checkout scripts.
+- ⚙️ **[Backend Architecture (`backend.md`)](./backend.md)** — Spring Boot services, PaymentService, and controllers.
+- 🗄️ **[Database Specification (`database.md`)](./database.md)** — 5-table schema and candidate registration constraints.
+- 📧 **[Email & OTP Architecture (`Email Notifications & OTP.md`)](./Email%20Notifications%20&%20OTP.md)** — 16 Thymeleaf templates and 15 triggers.

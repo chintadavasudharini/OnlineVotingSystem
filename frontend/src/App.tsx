@@ -14,6 +14,8 @@ import { ProtectedRoute } from './components/routes/ProtectedRoute';
 import { HomePage } from './pages/public/HomePage';
 import { RegisterPage } from './pages/public/RegisterPage';
 import { LoginPage } from './pages/public/LoginPage';
+import { ForgotPasswordPage } from './pages/public/ForgotPasswordPage';
+import { ResetPasswordPage } from './pages/public/ResetPasswordPage';
 import { PublicElectionsPage } from './pages/public/PublicElectionsPage';
 
 // Voter Pages
@@ -49,6 +51,8 @@ export const App: React.FC = () => {
           <Route path="/about" element={<HomePage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
           <Route path="/elections" element={<PublicElectionsPage />} />
           <Route path="/elections/:electionId" element={<PublicElectionsPage />} />
         </Route>

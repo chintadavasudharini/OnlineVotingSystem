@@ -48,6 +48,8 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Public root & status endpoint
                 .requestMatchers("/", "/error").permitAll()
+                // Authenticated user account updates under /api/auth
+                .requestMatchers("/api/auth/update-password/**", "/api/auth/update-email/**").authenticated()
                 // Public authentication and registration endpoints
                 .requestMatchers("/api/auth/**").permitAll()
                 // Public read endpoints for elections, candidate rosters, and results

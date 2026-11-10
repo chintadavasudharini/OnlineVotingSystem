@@ -36,6 +36,9 @@ public class VoteService {
     @Autowired
     private AuditService auditService;
 
+    @Autowired
+    private EmailService emailService;
+
     @Transactional
     public Vote castVote(String voterId, CastVoteRequest request) {
         User voter = userRepository.findByIdIgnoreCase(voterId)
@@ -73,6 +76,15 @@ public class VoteService {
                 "VOTER",
                 "Cast Vote",
                 voterId + " cast vote in election " + election.getId() + " (" + election.getTitle() + ")"
+        );
+
+        emailService.sendVoteConfirmationEmail(
+                voter.getEmail(),
+                voter.getName(),
+                voter.getId(),
+                election.getId(),
+                election.getTitle(),
+                null
         );
 
         return saved;

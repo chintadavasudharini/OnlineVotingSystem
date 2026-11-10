@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { UserCheck, Award, ArrowRight, CheckCircle2, Eye, EyeOff, Check, ShieldCheck, AlertCircle } from 'lucide-react';
+import { UserCheck, Award, ArrowRight, CheckCircle2, Eye, EyeOff, Check, ShieldCheck, AlertCircle, RefreshCw } from 'lucide-react';
 import { voterRegistrationSchema } from '../../schemas/authSchemas';
 import { calculateAge, formatDob } from '../../utils/dateFormatter';
-import { useVoterStore } from '../../stores/voterStore';
-import { useCandidateStore } from '../../stores/candidateStore';
 import { Modal } from '../../components/common/Modal';
+import { OtpModal } from '../../components/common/OtpModal';
+import api from '../../services/api';
 
 type RegistrationRole = 'VOTER' | 'CANDIDATE';
 
@@ -42,8 +42,12 @@ export const RegisterPage: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [successInfo, setSuccessInfo] = useState<{ id: string; role: RegistrationRole; voterId?: string } | null>(null);
 
-  const registerVoter = useVoterStore((state) => state.registerVoter);
-  const registerCandidateFromVoter = useCandidateStore((state) => state.registerCandidateFromVoter);
+  // OTP Verification state
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpVoterId, setOtpVoterId] = useState('');
+  const [otpPurposeRole, setOtpPurposeRole] = useState<RegistrationRole>('VOTER');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const calculatedAge = voterData.dob ? calculateAge(voterData.dob) : null;
   const isVoterAgeEligible = calculatedAge !== null && calculatedAge >= 18;
@@ -104,20 +108,30 @@ export const RegisterPage: React.FC = () => {
     }
 
     const age = calculateAge(result.data.dob);
+    setIsSubmitting(true);
 
-    const res = await registerVoter({
-      name: result.data.name,
-      email: result.data.email,
-      dob: result.data.dob,
-      gender: result.data.gender,
-      age,
-      password: result.data.password,
-    });
+    try {
+      const res = await api.post('/auth/register/send-otp', {
+        name: result.data.name,
+        email: result.data.email,
+        dob: result.data.dob,
+        gender: result.data.gender,
+        age,
+        password: result.data.password,
+      });
 
-    if (res.success && res.voter) {
-      setSuccessInfo({ id: res.voter.id, role: 'VOTER' });
-    } else {
-      setErrors({ email: res.error || 'Registration failed.' });
+      if (res.data && res.data.success) {
+        setOtpEmail(result.data.email.trim().toLowerCase());
+        setOtpPurposeRole('VOTER');
+        setShowOtpModal(true);
+      } else {
+        setErrors({ email: res.data?.message || 'Failed to dispatch verification OTP.' });
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Registration failed.';
+      setErrors({ email: msg });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -149,21 +163,88 @@ export const RegisterPage: React.FC = () => {
       return;
     }
 
-    const result = await registerCandidateFromVoter({
-      voterId: trimmedVoterId,
-      password: candidateData.password,
-    });
+    setIsSubmitting(true);
+    try {
+      const res = await api.post('/auth/candidate-register/send-otp', {
+        voterId: trimmedVoterId,
+        password: candidateData.password,
+      });
 
-    if (!result.success || !result.candidate) {
-      setErrors({ voterId: result.message });
-      return;
+      if (res.data && res.data.success) {
+        const emailMatch = res.data.message?.match(/\((.*?)\)/)?.[1] || res.data.data;
+        setOtpEmail(emailMatch || 'registered voter email');
+        setOtpVoterId(trimmedVoterId);
+        setOtpPurposeRole('CANDIDATE');
+        setShowOtpModal(true);
+      } else {
+        setErrors({ voterId: res.data?.message || 'Failed to send OTP.' });
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Candidate registration failed.';
+      setErrors({ voterId: msg });
+    } finally {
+      setIsSubmitting(false);
     }
+  };
 
-    setSuccessInfo({
-      id: result.candidate.id,
-      role: 'CANDIDATE',
-      voterId: trimmedVoterId,
-    });
+  const handleOtpVerify = async (otp: string) => {
+    try {
+      if (otpPurposeRole === 'VOTER') {
+        const res = await api.post('/auth/register/verify-otp', {
+          email: otpEmail,
+          otp,
+          purpose: 'VOTER_REGISTRATION',
+        });
+        if (res.data && res.data.success) {
+          setShowOtpModal(false);
+          setSuccessInfo({ id: res.data.data.id, role: 'VOTER' });
+          return { success: true, message: 'Voter account created successfully!' };
+        }
+        return { success: false, message: res.data?.message || 'Invalid OTP code.' };
+      } else {
+        const res = await api.post('/auth/candidate-register/verify-otp', {
+          email: otpEmail,
+          voterId: otpVoterId,
+          otp,
+          purpose: 'CANDIDATE_REGISTRATION',
+        });
+        if (res.data && res.data.success) {
+          setShowOtpModal(false);
+          setSuccessInfo({ id: res.data.data.id, role: 'CANDIDATE', voterId: otpVoterId });
+          return { success: true, message: 'Candidate account created successfully!' };
+        }
+        return { success: false, message: res.data?.message || 'Invalid OTP code.' };
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Verification failed.';
+      return { success: false, message: msg };
+    }
+  };
+
+  const handleOtpResend = async () => {
+    try {
+      if (otpPurposeRole === 'VOTER') {
+        const age = calculateAge(voterData.dob);
+        const res = await api.post('/auth/register/send-otp', {
+          name: voterData.name,
+          email: voterData.email,
+          dob: voterData.dob,
+          gender: voterData.gender,
+          age,
+          password: voterData.password,
+        });
+        return { success: true, message: res.data?.message || 'New OTP sent to email.' };
+      } else {
+        const res = await api.post('/auth/candidate-register/send-otp', {
+          voterId: candidateData.voterId.trim(),
+          password: candidateData.password,
+        });
+        return { success: true, message: res.data?.message || 'New OTP sent to registered voter email.' };
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.message || err.message || 'Failed to resend OTP.';
+      return { success: false, message: msg };
+    }
   };
 
   const handleSuccessClose = () => {
@@ -454,10 +535,21 @@ export const RegisterPage: React.FC = () => {
               <div style={{ marginTop: '1.5rem' }}>
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="btn btn-voter btn-block btn-lg"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                 >
-                  <span>Register as Voter</span>
-                  <ArrowRight size={18} />
+                  {isSubmitting ? (
+                    <>
+                      <RefreshCw size={18} className="animate-spin" />
+                      <span>Sending Verification Code...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Register as Voter</span>
+                      <ArrowRight size={18} />
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -566,10 +658,21 @@ export const RegisterPage: React.FC = () => {
               <div style={{ marginTop: '1.5rem' }}>
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="btn btn-candidate btn-block btn-lg"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
                 >
-                  <Award size={18} />
-                  <span>Register as Candidate</span>
+                  {isSubmitting ? (
+                    <>
+                      <RefreshCw size={18} className="animate-spin" />
+                      <span>Sending Verification Code...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Award size={18} />
+                      <span>Register as Candidate</span>
+                    </>
+                  )}
                 </button>
               </div>
 
@@ -604,6 +707,16 @@ export const RegisterPage: React.FC = () => {
           </span>
         </div>
       </div>
+
+      {/* OTP Security Verification Modal */}
+      <OtpModal
+        isOpen={showOtpModal}
+        onClose={() => setShowOtpModal(false)}
+        email={otpEmail}
+        purposeTitle={otpPurposeRole === 'VOTER' ? 'Voter Account Verification' : 'Candidate Account Verification'}
+        onVerify={handleOtpVerify}
+        onResend={handleOtpResend}
+      />
 
       {/* Success Modal */}
       <Modal

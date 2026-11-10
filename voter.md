@@ -52,26 +52,40 @@ To maintain electoral integrity, voter registration enforces non-negotiable veri
 1. Navigate to the registration page: **`http://localhost:5174/register`** (or click **Register as Voter** on the home page).
 2. Complete the verified citizen form:
    - **Full Name**: Your legal citizen name.
-   - **Email Address**: Your valid email (used for confirmation and voting notifications).
+   - **Email Address**: Your valid email (used for OTP verification and voting notifications).
    - **Date of Birth (DOB)**: Must establish age $\ge 18$.
    - **Gender**: Select `Male`, `Female`, or `Other`.
    - **Password & Confirm Password**: Minimum 6 characters.
-3. Click **Register as Voter**.
+3. Click **Continue to Verification**.
+4. **6-Character OTP Verification**:
+   - A 6-character cryptographic OTP (alternating letters and digits, e.g. `K4m9P2`) is dispatched to your email address via `otp-verification.html`.
+   - The **OTP Modal** appears with a **30-second live countdown timer** and a **30-second resend cooldown**.
+   - Enter the 6 characters. Upon entering the 6th character, the verification triggers automatically.
+   - The OTP is verified in memory (`OtpStorageService`) using SHA-256 with a 5-attempt brute-force protection limit.
+5. On successful OTP verification, your voter record is committed to PostgreSQL and your unique Voter ID (e.g. `V1`) is assigned.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Voter as Citizen
-    participant UI as React Client
+    participant UI as React Client (OtpModal)
     participant API as Spring Boot Backend
-    participant DB as PostgreSQL
-    participant Mail as Gmail SMTP
+    participant OtpEngine as Ephemeral OtpStorageService (RAM)
+    participant DB as PostgreSQL (5 Tables)
+    participant Mail as Gmail SMTP (TLS 587)
 
     Voter->>UI: Fills registration form (DOB >= 18, Gender)
-    UI->>API: POST /api/auth/register-voter
-    API->>API: Compute Age from DOB & Validate >= 18
-    API->>DB: Check email uniqueness for VOTER role
-    API->>DB: Generate Next Voter ID (e.g. V1)
+    Voter->>UI: Clicks "Continue to Verification"
+    UI->>API: POST /api/auth/register/send-otp {email, purpose: "REGISTRATION"}
+    API->>OtpEngine: Generate 6-char OTP, store SHA-256 hash (30s TTL)
+    API--)Mail: Dispatch async OTP Email (otp-verification.html)
+    API-->>UI: OTP sent response (200 OK)
+    UI-->>Voter: Opens OtpModal (30s timer, 6 input boxes)
+    Voter->>UI: Enters 6-char OTP
+    UI->>API: POST /api/auth/register/verify-otp {email, otp, purpose: "REGISTRATION"}
+    API->>OtpEngine: Validate SHA-256 digest & clear OTP
+    API-->>UI: OTP Verified (200 OK)
+    UI->>API: POST /api/auth/register-voter {details}
     API->>DB: Save User (BCrypt password, role: VOTER)
     API->>DB: Insert Audit Log ("V1 registered as Voter")
     API--)Mail: Dispatch async Welcome Email with Voter ID (V1)
@@ -86,7 +100,7 @@ Upon successful registration, **SecureVote** asynchronously delivers a branded H
 
 ---
 
-## 4. Authentication & Login Portal
+## 4. Authentication, Login Portal & Password Recovery
 
 To prevent account confusion and cross-role vulnerability, voters authenticate via an isolated, dedicated login screen:
 
@@ -98,13 +112,22 @@ To prevent account confusion and cross-role vulnerability, voters authenticate v
   - Entering Admin credentials is strictly rejected:  
     *`"Admin credentials cannot be used for Voter login."`*
 
+### Password Recovery Workflow
+If you forget your password:
+1. On `/login?role=voter`, click **Forgot Password?** to open `/forgot-password`.
+2. Enter your registered email address and submit.
+3. The system generates a cryptographically secure 32-byte URL token (Hex-encoded, valid for **60 seconds / 1 minute**) stored in ephemeral memory (`PasswordResetStorageService`).
+4. An email is dispatched via `password-reset.html` with your recovery link (`/reset-password?token=...`).
+5. Open the link within 60 seconds, enter your new password, and submit.
+6. The token is consumed atomically (single-use) and your password is updated with BCrypt hashing. A confirmation email is dispatched via `password-reset-success.html`.
+
 ---
 
-## 5. Voter Dashboard & Identity Profile
+## 5. Voter Dashboard, Identity Profile & Account Security
 
 Once logged in, voters access the **Voter Portal**:
 
-### Profile Screen (`/voter/profile`)
+### 1. Citizen Profile Screen (`/voter/profile`)
 Displays verified citizen credentials in read-only form:
 - **Voter ID:** Official identifier (`V1`)
 - **Full Name:** Registered citizen name
@@ -113,6 +136,18 @@ Displays verified citizen credentials in read-only form:
 - **Gender:** Registered gender identity
 - **Age:** Dynamically verified age
 - **Account Status:** `ACTIVE (Verified)`
+
+### 2. Account Security Section
+Located directly on your profile page:
+* **Change Password**:
+  - Enter your current password and desired new password ($\ge 6$ characters).
+  - Optionally confirm via a 6-character OTP sent to your registered email.
+  - Upon success, a notification is sent via `password-updated.html`.
+* **Update Email Address**:
+  - Enter your new email address.
+  - The system dispatches a 6-character OTP (valid 30 seconds) to the **new** email address.
+  - Enter the OTP in `OtpModal.tsx` to verify ownership.
+  - On verification, your email is updated in PostgreSQL (`users` table) and a confirmation is sent to both old and new addresses via `email-updated.html`.
 
 ---
 
@@ -207,3 +242,11 @@ A: No. In compliance with democratic standards, all ballots are final, immutable
 
 **Q: Why is the 'Cast Vote' button disabled?**  
 A: Voting is permitted strictly when the election status is `VOTING_OPEN`. If the election is `UPCOMING`, `REGISTRATION_OPEN`, or `COMPLETED`, balloting is physically locked.
+
+---
+
+## 11. Cross-Reference Documentation
+- 🖥️ **[Frontend Architecture (`frontend.md`)](./frontend.md)** — React 19 UI components, OtpModal, and routing guards.
+- ⚙️ **[Backend Architecture (`backend.md`)](./backend.md)** — Spring Boot services, OTP storage, and API contracts.
+- 🗄️ **[Database Specification (`database.md`)](./database.md)** — Relational constraints preventing double-voting.
+- 📧 **[Email & OTP Architecture (`Email Notifications & OTP.md`)](./Email%20Notifications%20&%20OTP.md)** — 16 Thymeleaf templates and 15 triggers.

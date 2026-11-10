@@ -2,6 +2,7 @@ import React from 'react';
 import { UserCheck, Mail, Calendar, Clock, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../../stores/authStore';
 import { formatDob } from '../../utils/dateFormatter';
+import { AccountSecuritySection } from '../../components/common/AccountSecuritySection';
 
 export const VoterProfile: React.FC = () => {
   const currentUser = useAuthStore((state) => state.currentUser);
@@ -140,10 +141,16 @@ export const VoterProfile: React.FC = () => {
 
         <div className="card-footer" style={{ backgroundColor: '#f0fdf4' }}>
           <span style={{ fontSize: '0.8rem', color: '#166534' }}>
-            To update registered credentials, please contact the election administrator.
+            Official registered details are preserved securely by the Election Commission.
           </span>
         </div>
       </div>
+
+      {/* OTP-Protected Account Security Section */}
+      <AccountSecuritySection
+        currentEmail={currentUser?.email || ''}
+        themeColor="#15803d"
+      />
     </div>
   );
 };

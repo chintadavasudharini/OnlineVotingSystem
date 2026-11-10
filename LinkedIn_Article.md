@@ -164,19 +164,35 @@ CompletableFuture.runAsync(() -> {
 
 The platform includes a dedicated security subsystem for authentication and recovery:
 
-### 30-Second Cryptographic OTP
+### 30-Second Cryptographic OTP (In-Memory Engine)
 - **Custom Pattern:** Exactly 6 characters adhering to:
   $$\text{OTP} = [A\text{-}Z][a\text{-}z][0\text{-}9][A\text{-}Z][a\text{-}z][0\text{-}9] \quad (\text{e.g., } \texttt{Bv3Ch8})$$
   Generated using `java.security.SecureRandom`.
+- **Ephemeral Zero-Footprint Storage:** Stored exclusively in JVM `ConcurrentHashMap` with SHA-256 digests. **Zero database tables added.**
 - **Strict Expiry:** Exactly **30 seconds** with an interactive countdown UI (`00:30` &rarr; `00:00` &rarr; `OTP Expired`).
 - **Resend Security:** 30-second cooldown, max 5 resends/hour.
 - **Brute-Force Shield:** Maximum 5 incorrect attempts before the OTP is permanently invalidated.
+- **Background Purging:** Automated eviction scheduler sweeps memory every 10 seconds.
 
 ### 1-Minute Single-Use Password Reset
-- Generates a 32-byte cryptographic token.
-- Stored as a **SHA-256 hash** in PostgreSQL (`password_reset_tokens`).
-- Strictly valid for **1 minute**.
-- Single-use only: invalidated immediately upon password update. Zero plain passwords or tokens are ever emailed or logged.
+- Generates a 32-byte cryptographic token (Hex-encoded).
+- Stored as a **SHA-256 hash** in ephemeral JVM memory (`PasswordResetStorageService`).
+- Strictly valid for **1 minute** (60 seconds).
+- Single-use only: invalidated and expunged atomically upon password update. Zero plain passwords or tokens are ever emailed or logged.
+
+---
+
+## 7. Dual-Profile Security Architecture (Dev vs Prod)
+
+To maintain an effortless experience for college demonstrations and local testing while meeting institutional production security requirements, the backend implements automated Spring Boot profile segregation:
+
+- **Development Profile (`dev`):**
+  - Retains pre-configured `admin` / `admin` demonstration credentials.
+  - Allows instant local startup and functional testing.
+- **Production Profile (`prod`):**
+  - Reads `ADMIN_USERNAME` and `ADMIN_PASSWORD` strictly from host environment variables.
+  - Startup halts with an `IllegalStateException` if credentials are blank, $< 8$ characters, or equal to `admin/admin`.
+  - Passwords are verified with BCrypt salting and never exposed in logs or API payloads.
 
 ---
 
@@ -293,10 +309,12 @@ Building an electronic voting platform requires solving some of the toughest eng
 • Asynchronous email notifications & 30-second cryptographic OTPs
 
 💡 Key Architectural Highlights:
+✅ Dual-Profile Admin Security: `admin/admin` for local demos (`dev`), strict env vars rejecting default credentials in production (`prod`).
+✅ Zero-Footprint Ephemeral Security: 30s OTPs & 1-min password reset tokens stored in volatile JVM `ConcurrentHashMap` with 10s auto-purging — strictly 5 PostgreSQL tables!
 ✅ Zero Double-Voting: Enforced at the PostgreSQL relational engine via composite unique constraints UNIQUE(election_id, voter_id).
 ✅ Constitutional Lineage: Candidates must be verified citizens (>= 25 years) linked to an active voter identity.
 ✅ Financial Proof of Candidacy: ₹100 nomination security deposit verified server-side via Razorpay REST API & HMAC signatures.
-✅ Async Email Engine: Branded HTML onboarding & receipts dispatched via Gmail SMTP (TLS 587) with non-blocking CompletableFuture.
+✅ Async Email Engine: 16 responsive HTML templates covering 15 notification events dispatched via Gmail SMTP (TLS 587) with non-blocking CompletableFuture.
 ✅ Dynamic Certified Results: Dedicated green cards for single winners and yellow cards for multi-candidate ties.
 ✅ Demographic Inclusivity: Gender recognition (Male, Female, Other) with complete profile and administrative governance.
 

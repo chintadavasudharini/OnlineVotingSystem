@@ -4,6 +4,7 @@ import { useAuthStore } from '../../stores/authStore';
 import api from '../../services/api';
 import type { User } from '../../types';
 import { formatDob } from '../../utils/dateFormatter';
+import { AccountSecuritySection } from '../../components/common/AccountSecuritySection';
 
 export const CandidateProfile: React.FC = () => {
   const currentUser = useAuthStore((state) => state.currentUser);
@@ -165,6 +166,12 @@ export const CandidateProfile: React.FC = () => {
           </span>
         </div>
       </div>
+
+      {/* OTP-Protected Account Security Section */}
+      <AccountSecuritySection
+        currentEmail={user?.email || ''}
+        themeColor="#ea580c"
+      />
     </div>
   );
 };
