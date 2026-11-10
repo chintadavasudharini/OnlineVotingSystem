@@ -32,6 +32,7 @@
 
 ### 📚 Dedicated Technical Documentation
 - 📑 **[Project Specification (`Project.md`)](./Project.md)** — Comprehensive technical dossier, end-to-end system invariants, and state machines.
+- 🔌 **[REST API Specification (`REST API.md`)](./REST%20API.md)** — Complete endpoint reference, payload contracts, authentication schemes, and status codes.
 - 🖥️ **[Frontend Architecture (`frontend.md`)](./frontend.md)** — React 19, Vite 8, Zustand stores, route hierarchy, OTP modals, and security settings.
 - ⚙️ **[Backend Architecture (`backend.md`)](./backend.md)** — Spring Boot 3.3.4, Java 21, Spring Security 6, dual-profile Admin, in-memory OTP/reset engines.
 - 🗄️ **[Database Specification (`database.md`)](./database.md)** — PostgreSQL 5-table schema, ER diagrams, anti-fraud composite constraints, zero-table ephemeral credentials.

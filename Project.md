@@ -1069,6 +1069,8 @@ Building SecureVote provided key software engineering takeaways:
   [https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/)
 - 💻 **GitHub Repository:**  
   [https://github.com/chintadavasudharini/OnlineVotingSystem/](https://github.com/chintadavasudharini/OnlineVotingSystem/)
+- 🔌 **REST API Specification:**  
+  [REST API Documentation (`REST API.md`)](./REST%20API.md)
 - 🌐 **Live Frontend Application (Vercel):**  
   [https://securevote-onlinevotingsystem.vercel.app/](https://securevote-onlinevotingsystem.vercel.app/)
 - ⚙️ **Backend REST API (Render):**  
