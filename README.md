@@ -532,6 +532,7 @@ An enterprise Postman collection is included in the root directory:
 
 Developed with ❤️ by **[Chintada Vasudharini](https://github.com/chintadavasudharini)**.
 
+- **Developer Portfolio**: [https://chintadavasudharini-portfolio.vercel.app/](https://chintadavasudharini-portfolio.vercel.app/)
 - **GitHub Repository**: [https://github.com/chintadavasudharini/OnlineVotingSystem](https://github.com/chintadavasudharini/OnlineVotingSystem)
 - **LinkedIn Article**: [Online Voting System — Enterprise Architecture & System Invariants](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/)
 - Issues and Pull Requests are welcomed! Please adhere to standard Git commit guidelines.
