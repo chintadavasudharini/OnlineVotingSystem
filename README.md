@@ -23,6 +23,7 @@
 
 [🚀 Live Web Application (Vercel)](https://securevote-onlinevotingsystem.vercel.app/) •
 [🌐 Live Backend API (Render)](https://securevote-onlinevotingsystem-backend.onrender.com) •
+[💼 Developer Portfolio](https://chintadavasudharini-portfolio.vercel.app/) •
 [Explore Repository](https://github.com/chintadavasudharini/OnlineVotingSystem) •
 [📖 Deep-Dive Technical Dossier](Project.md) •
 [📰 LinkedIn Article](https://www.linkedin.com/pulse/online-voting-system-chintada-vasudharini-wrhic/) •

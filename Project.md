@@ -2,6 +2,7 @@
 ## Complete System Architecture, Engineering Specifications, Database Design, Security & Cloud Deployment
 
 > **Author:** Chintada Vasudharini  
+> **Portfolio:** [https://chintadavasudharini-portfolio.vercel.app/](https://chintadavasudharini-portfolio.vercel.app/)  
 > **Academic Context:** M.Tech in Artificial Intelligence & Data Science (AIDS) Academic Hackathon  
 > **Institution:** KL University (KLU), Vijayawada  
 > **Repository:** [https://github.com/chintadavasudharini/OnlineVotingSystem/](https://github.com/chintadavasudharini/OnlineVotingSystem/)  
@@ -1061,6 +1062,8 @@ Building SecureVote provided key software engineering takeaways:
 
 ## 22. Production Links & Verification Artifacts
 
+- 🌐 **Developer Portfolio:**  
+  [https://chintadavasudharini-portfolio.vercel.app/](https://chintadavasudharini-portfolio.vercel.app/)
 - 💻 **GitHub Repository:**  
   [https://github.com/chintadavasudharini/OnlineVotingSystem/](https://github.com/chintadavasudharini/OnlineVotingSystem/)
 - 🌐 **Live Frontend Application (Vercel):**  
